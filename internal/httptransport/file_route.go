@@ -7,7 +7,7 @@ import (
 )
 
 func (ht *HttpTransport) fileRoute() {
-	ht.fiber.Get("/:file", func(c *fiber.Ctx) error {
+	ht.fiber.Get("/file/:file", func(c *fiber.Ctx) error {
 		data, metadata, err := ht.fileHostingService.GetFile(c.UserContext(), c.Params("file"))
 		if err != nil {
 			return err

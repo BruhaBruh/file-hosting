@@ -2,11 +2,11 @@
 
 ## REST
 
-`GET /:file`
+`GET /file/:file`
 
 Retrieve a file by its ID. If has custom metadata, it will be returned in the response headers with a prefix `X-Meta-`.
 
-`GET /:file/metadata`
+`GET /file/:file/metadata`
 
 Retrieve metadata for a file by its ID.
 
@@ -44,3 +44,11 @@ Possible durations:
 - `1d` - 1 day
 - `7d` - 1 week
 - `1w` - 1 week
+
+## TODO
+
+- [ ] S3 Storage support
+- [ ] Make landing page for upload file
+- [ ] Create Dockerfile
+- [ ] Create docker-compose.example.yaml
+- [ ] Add traces, metrics and logging. Also add collectors and exporters
