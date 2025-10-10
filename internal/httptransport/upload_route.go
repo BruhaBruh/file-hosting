@@ -30,7 +30,7 @@ func (ht *HttpTransport) uploadPublicRoute() {
 
 		metadata := &domain.FileMetadata{
 			Name:     fileHeader.Filename,
-			MimeType: fileHeader.Header.Get("Content-Type"),
+			MimeType: fileHeader.Header.Get(fiber.HeaderContentType),
 			Meta:     make(map[string][]string),
 		}
 
@@ -81,7 +81,7 @@ func (ht *HttpTransport) uploadPrivateRoute() {
 
 		metadata := &domain.FileMetadata{
 			Name:     c.Params("file"),
-			MimeType: fileHeader.Header.Get("Content-Type"),
+			MimeType: fileHeader.Header.Get(fiber.HeaderContentType),
 			Meta:     make(map[string][]string),
 		}
 

@@ -3,18 +3,19 @@ package httptransport
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/bruhabruh/file-hosting/internal/app/apperr"
 	"github.com/bruhabruh/file-hosting/internal/config"
 	"github.com/bruhabruh/file-hosting/internal/service"
 	"github.com/bruhabruh/file-hosting/pkg/logging"
+	"github.com/bruhabruh/file-hosting/pkg/slogfiber"
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/healthcheck"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	slogfiber "github.com/samber/slog-fiber"
 )
 
 type HttpTransport struct {
@@ -36,10 +37,8 @@ func New(config *config.Config, logger *logging.Logger, fileHostingService *serv
 				JSONEncoder:           json.Marshal,
 				JSONDecoder:           json.Unmarshal,
 				ErrorHandler: func(c *fiber.Ctx, err error) error {
-					// Status code defaults to 500
 					code := fiber.StatusInternalServerError
 
-					// Retrieve the custom status code if it's a *fiber.Error
 					var e *fiber.Error
 					if errors.As(err, &e) {
 						code = e.Code
@@ -49,10 +48,8 @@ func New(config *config.Config, logger *logging.Logger, fileHostingService *serv
 						code = apperr.Code()
 					}
 
-					// Set Content-Type: text/plain; charset=utf-8
 					c.Set(fiber.HeaderContentType, fiber.MIMETextPlainCharsetUTF8)
 
-					// Return status code with error message
 					return c.Status(code).SendString(err.Error())
 				},
 			},
@@ -82,9 +79,19 @@ func (ht *HttpTransport) configureMiddlewares() {
 	ht.fiber.Use(slogfiber.NewWithConfig(
 		ht.logger,
 		slogfiber.Config{
-			WithSpanID:    true,
-			WithTraceID:   true,
-			WithUserAgent: true,
+			DefaultLevel:     slog.LevelInfo,
+			ClientErrorLevel: slog.LevelWarn,
+			ServerErrorLevel: slog.LevelError,
+
+			WithUserAgent:      true,
+			WithRequestID:      true,
+			WithRequestBody:    false,
+			WithRequestHeader:  false,
+			WithResponseBody:   false,
+			WithResponseHeader: false,
+			WithSpanID:         true,
+			WithTraceID:        true,
+
 			Filters: []slogfiber.Filter{
 				slogfiber.IgnorePath(
 					"/.well-known/appspecific/com.chrome.devtools.json",

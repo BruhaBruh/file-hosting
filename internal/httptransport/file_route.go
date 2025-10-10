@@ -12,8 +12,8 @@ func (ht *HttpTransport) fileRoute() {
 		if err != nil {
 			return err
 		}
-		c.Response().Header.Set("Content-Type", metadata.MimeType)
-		c.Response().Header.Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", metadata.Name))
+		c.Response().Header.Set(fiber.HeaderContentType, metadata.MimeType)
+		c.Response().Header.Set(fiber.HeaderContentDisposition, fmt.Sprintf("attachment; filename=\"%s\"", metadata.Name))
 		for key, value := range metadata.Meta {
 			header := fmt.Sprintf("X-Meta-%s", key)
 			for i := range value {
