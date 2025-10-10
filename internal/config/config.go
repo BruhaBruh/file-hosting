@@ -13,6 +13,7 @@ type Config struct {
 	apiKey      string
 	logger      *LoggerConfig
 	fileStorage *FileStorageConfig
+	rabbitmq    *RabbitMQConfig
 }
 
 func newConfig(v *viper.Viper) *Config {
@@ -26,6 +27,7 @@ func newConfig(v *viper.Viper) *Config {
 		apiKey:      v.GetString("API_KEY"),
 		logger:      newLoggerConfig("logger", v),
 		fileStorage: newFileStorageConfig("fileStorage", v),
+		rabbitmq:    newRabbitMQConfig("rabbitmq", v),
 	}
 }
 
@@ -49,6 +51,10 @@ func (c *Config) FileStorage() *FileStorageConfig {
 	return c.fileStorage
 }
 
+func (c *Config) RabbitMQ() *RabbitMQConfig {
+	return c.rabbitmq
+}
+
 func (c *Config) Validate() error {
 	if c.port < 0 || c.port > 65535 {
 		return fmt.Errorf("invalid port: %d", c.port)
@@ -64,6 +70,10 @@ func (c *Config) Validate() error {
 
 	if err := c.fileStorage.Validate(); err != nil {
 		return fmt.Errorf("invalid file storage config: %w", err)
+	}
+
+	if err := c.rabbitmq.Validate(); err != nil {
+		return fmt.Errorf("invalid rabbitmq config: %w", err)
 	}
 
 	return nil

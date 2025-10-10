@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/signal"
@@ -10,6 +11,8 @@ import (
 	"github.com/bruhabruh/file-hosting/internal/httptransport"
 	"github.com/bruhabruh/file-hosting/internal/service"
 	"github.com/bruhabruh/file-hosting/internal/storage"
+	"github.com/bruhabruh/file-hosting/pkg/logging"
+	"github.com/bruhabruh/file-hosting/pkg/rabbitmq"
 )
 
 type App struct {
@@ -23,14 +26,26 @@ func New(cfg *config.Config) *App {
 }
 
 func (a *App) Run() {
+	ctx := context.Background()
+
 	logger := a.config.Logger().Build()
+
+	ctx = logging.ContextWithLogger(ctx, logger)
+
+	mq, err := rabbitmq.NewRabbitMQ(a.config.RabbitMQ().URL())
+	if err != nil {
+		log.Fatalf("Fail create rabbitmq: %s", err.Error())
+	}
 
 	var fileStorage storage.FileStorage
 	if a.config.FileStorage().Basic().Enabled() {
 		fileStorage = storage.NewBasicFileStorage(a.config.FileStorage().Basic().Directory())
 	}
 
-	fileHostingService := service.NewFileHostingService(fileStorage)
+	fileHostingService, err := service.NewFileHostingService(ctx, fileStorage, mq)
+	if err != nil {
+		log.Fatalf("Fail create file hosting service: %s", err.Error())
+	}
 
 	http := httptransport.New(a.config, logger, fileHostingService)
 
@@ -41,8 +56,14 @@ func (a *App) Run() {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 
-	s := <-interrupt
-	logger.Error(s.String())
+	select {
+	case s := <-interrupt:
+		logger.Error(s.String())
+	case _ = <-ctx.Done():
+		if ctx.Err() != nil {
+			logger.Error(ctx.Err().Error())
+		}
+	}
 
 	if err := http.Shutdown(); err != nil {
 		logger.Error(err.Error())

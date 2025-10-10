@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/bruhabruh/file-hosting/internal/app/apperr"
 	"github.com/bruhabruh/file-hosting/internal/domain"
+	"github.com/bruhabruh/file-hosting/pkg/logging"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -14,18 +16,21 @@ func (ht *HttpTransport) uploadPublicRoute() {
 	ht.fiber.Post("/upload", func(c *fiber.Ctx) error {
 		fileHeader, err := c.FormFile("file")
 		if err != nil {
-			return err
+			logging.L(c.UserContext()).Warn("failed to get file from form", logging.ErrAttr(err))
+			return apperr.ErrBadRequest.WithMessage("Fail get file")
 		}
 
 		file, err := fileHeader.Open()
 		if err != nil {
-			return err
+			logging.L(c.UserContext()).Warn("failed to open file", logging.ErrAttr(err))
+			return apperr.ErrBadRequest.WithMessage("Fail to open file")
 		}
 		defer file.Close()
 
 		data, err := io.ReadAll(file)
 		if err != nil {
-			return err
+			logging.L(c.UserContext()).Warn("failed to read file", logging.ErrAttr(err))
+			return apperr.ErrBadRequest.WithMessage("Fail to read file")
 		}
 
 		metadata := &domain.FileMetadata{
@@ -50,7 +55,7 @@ func (ht *HttpTransport) uploadPublicRoute() {
 			metadata.MimeType = http.DetectContentType(data)
 		}
 
-		fileName, err := ht.fileHostingService.UploadFileWithGenerativeName(c.UserContext(), data, metadata)
+		fileName, err := ht.fileHostingService.UploadFileWithGenerativeName(c.UserContext(), data, metadata, c.Query("d"))
 		if err != nil {
 			return err
 		}
@@ -65,18 +70,21 @@ func (ht *HttpTransport) uploadPrivateRoute() {
 	ht.fiber.Post("/upload/:file", ht.authorizationMiddleware(), func(c *fiber.Ctx) error {
 		fileHeader, err := c.FormFile("file")
 		if err != nil {
-			return err
+			logging.L(c.UserContext()).Warn("failed to get file from form", logging.ErrAttr(err))
+			return apperr.ErrBadRequest.WithMessage("Fail get file")
 		}
 
 		file, err := fileHeader.Open()
 		if err != nil {
-			return err
+			logging.L(c.UserContext()).Warn("failed to open file", logging.ErrAttr(err))
+			return apperr.ErrBadRequest.WithMessage("Fail to open file")
 		}
 		defer file.Close()
 
 		data, err := io.ReadAll(file)
 		if err != nil {
-			return err
+			logging.L(c.UserContext()).Warn("failed to read file", logging.ErrAttr(err))
+			return apperr.ErrBadRequest.WithMessage("Fail to read file")
 		}
 
 		metadata := &domain.FileMetadata{
@@ -101,7 +109,7 @@ func (ht *HttpTransport) uploadPrivateRoute() {
 			metadata.MimeType = http.DetectContentType(data)
 		}
 
-		fileName, err := ht.fileHostingService.UploadFile(c.UserContext(), data, metadata)
+		fileName, err := ht.fileHostingService.UploadFile(c.UserContext(), data, metadata, c.Query("d"))
 		if err != nil {
 			return err
 		}

@@ -15,3 +15,8 @@ fileStorage:
   basic:
     enabled: true
     path: files
+rabbitmq:
+  host: localhost
+  port: 5672
+  username: guest
+  password: guest

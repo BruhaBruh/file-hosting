@@ -12,6 +12,7 @@ type FileMetadata struct {
 	Sha1       string              `json:"sha1"`
 	Meta       map[string][]string `json:"meta"`
 	CreatedAt  time.Time           `json:"created_at"`
+	ExpiredAt  time.Time           `json:"expired_at"`
 	BackupName string              `json:"backup_name,omitempty"`
 }
 

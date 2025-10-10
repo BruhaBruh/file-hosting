@@ -7,6 +7,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.9
 	github.com/google/uuid v1.6.0
 	github.com/spf13/viper v1.21.0
+	github.com/streadway/amqp v1.1.0
 	github.com/valyala/fasthttp v1.59.0
 	go.opentelemetry.io/otel/trace v1.29.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
