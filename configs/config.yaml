@@ -1,0 +1,17 @@
+origin: http://localhost:8080
+port: 8080
+API_KEY: secret-key
+logger:
+  level: info
+  format: text
+  addSource: false
+  file:
+    path: ""
+    maxSizeInMB: 10
+    maxBackups: 3
+    maxAgeInDays: 14
+    compress: false
+fileStorage:
+  basic:
+    enabled: true
+    path: files
