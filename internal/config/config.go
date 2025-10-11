@@ -19,7 +19,6 @@ type Config struct {
 func newConfig(v *viper.Viper) *Config {
 	v.SetDefault("origin", "http://localhost:8080")
 	v.SetDefault("port", 8080)
-	v.SetDefault("API_KEY", "")
 
 	return &Config{
 		origin:      v.GetString("origin"),

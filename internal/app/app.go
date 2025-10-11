@@ -13,6 +13,7 @@ import (
 	"github.com/bruhabruh/file-hosting/internal/storage"
 	"github.com/bruhabruh/file-hosting/pkg/logging"
 	"github.com/bruhabruh/file-hosting/pkg/rabbitmq"
+	"github.com/bruhabruh/file-hosting/pkg/s3"
 )
 
 type App struct {
@@ -37,9 +38,24 @@ func (a *App) Run() {
 		log.Fatalf("Fail create rabbitmq: %s", err.Error())
 	}
 
+	s3, err := s3.New(
+		a.config.FileStorage().S3().Endpoint(),
+		a.config.FileStorage().S3().Region(),
+		a.config.FileStorage().S3().AccessKey(),
+		a.config.FileStorage().S3().SecretKey(),
+		a.config.FileStorage().S3().UseSSL(),
+		a.config.FileStorage().S3().Bucket(),
+	)
+	if err != nil {
+		log.Fatalf("Fail create s3 client: %s", err.Error())
+	}
+
 	var fileStorage storage.FileStorage
 	if a.config.FileStorage().Basic().Enabled() {
 		fileStorage = storage.NewBasicFileStorage(a.config.FileStorage().Basic().Directory())
+	}
+	if a.config.FileStorage().S3().Enabled() {
+		fileStorage = storage.NewS3FileStorage(s3)
 	}
 
 	fileHostingService, err := service.NewFileHostingService(ctx, fileStorage, mq)

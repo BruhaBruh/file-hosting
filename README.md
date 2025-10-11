@@ -47,7 +47,6 @@ Possible durations:
 
 ## TODO
 
-- [ ] S3 Storage support
 - [ ] Make landing page for upload file
 - [ ] Create Dockerfile
 - [ ] Create docker-compose.example.yaml

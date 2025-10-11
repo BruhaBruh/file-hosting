@@ -139,12 +139,12 @@ func (s *FileHostingService) UploadFile(ctx context.Context, data []byte, metada
 		}
 	}
 
-	err = s.fileStorage.Write(ctx, newMetadata.Name, data)
+	err = s.fileStorage.Write(ctx, newMetadata.Name, data, newMetadata.MimeType)
 	if err != nil {
 		return "", err
 	}
 
-	err = s.fileStorage.Write(ctx, s.metadataFile(newMetadata.Name), metadataInBytes)
+	err = s.fileStorage.Write(ctx, s.metadataFile(newMetadata.Name), metadataInBytes, "application/json")
 	if err != nil {
 		s.fileStorage.Delete(ctx, newMetadata.Name)
 		return "", err
@@ -186,12 +186,12 @@ func (s *FileHostingService) UploadFileWithGenerativeName(ctx context.Context, d
 		return "", err
 	}
 
-	err = s.fileStorage.Write(ctx, fileName, data)
+	err = s.fileStorage.Write(ctx, fileName, data, newMetadata.MimeType)
 	if err != nil {
 		return "", err
 	}
 
-	err = s.fileStorage.Write(ctx, s.metadataFile(fileName), metadataInBytes)
+	err = s.fileStorage.Write(ctx, s.metadataFile(fileName), metadataInBytes, "application/json")
 	if err != nil {
 		s.fileStorage.Delete(ctx, fileName)
 		return "", err

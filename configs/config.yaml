@@ -1,6 +1,5 @@
-origin: http://localhost:8080
+origin: http://localhost:8080/file
 port: 8080
-API_KEY: secret-key
 logger:
   level: info
   format: text
@@ -13,10 +12,14 @@ logger:
     compress: false
 fileStorage:
   basic:
-    enabled: true
+    enabled: false
     path: files
+  s3:
+    enabled: true
+    endpoint: localhost:9000
+    region: ru-local
+    bucket: files
+    useSSL: false
 rabbitmq:
   host: localhost
   port: 5672
-  username: guest
-  password: guest

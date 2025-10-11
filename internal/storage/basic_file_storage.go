@@ -28,8 +28,8 @@ func NewBasicFileStorage(directory string) FileStorage {
 
 var _ FileStorage = (*BasicFileStorage)(nil)
 
-func (b *BasicFileStorage) IsExist(ctx context.Context, file string) bool {
-	_, err := os.Stat(b.path(file))
+func (s *BasicFileStorage) IsExist(ctx context.Context, file string) bool {
+	_, err := os.Stat(s.path(file))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return false
@@ -38,12 +38,12 @@ func (b *BasicFileStorage) IsExist(ctx context.Context, file string) bool {
 	return true
 }
 
-func (b *BasicFileStorage) Read(ctx context.Context, file string) ([]byte, error) {
-	if !b.IsExist(ctx, file) {
+func (s *BasicFileStorage) Read(ctx context.Context, file string) ([]byte, error) {
+	if !s.IsExist(ctx, file) {
 		return nil, apperr.ErrNotFound.WithMessage(fmt.Sprintf("File %s not found", file))
 	}
 
-	f, err := os.Open(b.path(file))
+	f, err := os.Open(s.path(file))
 	if err != nil {
 		logging.L(ctx).Error(fmt.Sprintf("Fail open file %s", file), logging.ErrAttr(err))
 		return nil, apperr.ErrInternalServerError.WithMessage(fmt.Sprintf("Fail open file %s", file))
@@ -59,12 +59,12 @@ func (b *BasicFileStorage) Read(ctx context.Context, file string) ([]byte, error
 	return data, nil
 }
 
-func (b *BasicFileStorage) Write(ctx context.Context, file string, data []byte) error {
-	if b.IsExist(ctx, file) {
+func (s *BasicFileStorage) Write(ctx context.Context, file string, data []byte, contentType string) error {
+	if s.IsExist(ctx, file) {
 		return apperr.ErrConflict.WithMessage(fmt.Sprintf("File %s already exist", file))
 	}
 
-	f, err := os.Create(b.path(file))
+	f, err := os.Create(s.path(file))
 	if err != nil {
 		logging.L(ctx).Error(fmt.Sprintf("Fail create file %s", file), logging.ErrAttr(err))
 		return apperr.ErrInternalServerError.WithMessage(fmt.Sprintf("Fail create file %s", file))
@@ -80,12 +80,12 @@ func (b *BasicFileStorage) Write(ctx context.Context, file string, data []byte) 
 	return nil
 }
 
-func (b *BasicFileStorage) Move(ctx context.Context, file string, newFile string) error {
-	if !b.IsExist(ctx, file) {
+func (s *BasicFileStorage) Move(ctx context.Context, file string, newFile string) error {
+	if !s.IsExist(ctx, file) {
 		return apperr.ErrNotFound.WithMessage(fmt.Sprintf("File %s not found", file))
 	}
 
-	err := os.Rename(b.path(file), b.path(newFile))
+	err := os.Rename(s.path(file), s.path(newFile))
 	if err != nil {
 		logging.L(ctx).Error(fmt.Sprintf("Fail move file %s to %s", file, newFile), logging.ErrAttr(err))
 		return apperr.ErrInternalServerError.WithMessage(fmt.Sprintf("Fail move file %s to %s", file, newFile))
@@ -94,12 +94,12 @@ func (b *BasicFileStorage) Move(ctx context.Context, file string, newFile string
 	return nil
 }
 
-func (b *BasicFileStorage) Delete(ctx context.Context, file string) error {
-	if !b.IsExist(ctx, file) {
+func (s *BasicFileStorage) Delete(ctx context.Context, file string) error {
+	if !s.IsExist(ctx, file) {
 		return apperr.ErrNotFound.WithMessage(fmt.Sprintf("File %s not found", file))
 	}
 
-	err := os.Remove(b.path(file))
+	err := os.Remove(s.path(file))
 	if err != nil {
 		logging.L(ctx).Error(fmt.Sprintf("Fail delete file %s", file), logging.ErrAttr(err))
 		return apperr.ErrInternalServerError.WithMessage(fmt.Sprintf("Fail delete file %s", file))
@@ -108,6 +108,6 @@ func (b *BasicFileStorage) Delete(ctx context.Context, file string) error {
 	return nil
 }
 
-func (b *BasicFileStorage) path(file string) string {
-	return path.Join(b.directory, file)
+func (s *BasicFileStorage) path(file string) string {
+	return path.Join(s.directory, file)
 }

@@ -16,14 +16,12 @@ type RabbitMQConfig struct {
 func newRabbitMQConfig(prefix string, v *viper.Viper) *RabbitMQConfig {
 	v.SetDefault(path(prefix, "host"), "localhost")
 	v.SetDefault(path(prefix, "port"), 5672)
-	v.SetDefault(path(prefix, "username"), "guest")
-	v.SetDefault(path(prefix, "password"), "guest")
 
 	return &RabbitMQConfig{
 		host:     v.GetString(path(prefix, "host")),
 		port:     v.GetInt(path(prefix, "port")),
-		username: v.GetString(path(prefix, "username")),
-		password: v.GetString(path(prefix, "password")),
+		username: v.GetString("RABBITMQ_USERNAME"),
+		password: v.GetString("RABBITMQ_PASSWORD"),
 	}
 }
 

@@ -56,8 +56,9 @@ func (r *RabbitMQ) Publish(queueName string, message []byte, contentTypes ...str
 		false,
 		false,
 		amqp.Publishing{
-			ContentType: contentType,
-			Body:        message,
+			ContentType:  contentType,
+			Body:         message,
+			DeliveryMode: 2,
 		},
 	)
 	if err != nil {
