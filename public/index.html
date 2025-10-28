@@ -1,0 +1,283 @@
+<!doctype html>
+<html>
+  <head>
+    <title>File Hosting Service</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  </head>
+  <body class="bg-zinc-900 text-zinc-50 scheme-only-dark">
+    <main class="container max-w-lg px-4 mx-auto py-12">
+      <h1 class="text-2xl font-bold mb-8">Upload File</h1>
+
+      <form
+        class="inline-flex flex-col gap-4 w-full"
+        action="/upload"
+        method="post"
+        enctype="multipart/form-data"
+      >
+        <input
+          class="outline outline-zinc-700 px-2 py-2 text-md font-medium cursor-pointer hover:bg-zinc-800 rounded-md transition"
+          type="file"
+          name="file"
+          required
+        />
+
+        <label class="inline-flex flex-col gap-2">
+          <span class="text-sm font-medium tracking-wide">Expire duration</span>
+          <select
+            class="outline outline-zinc-700 px-2 py-2 text-md font-medium cursor-pointer bg-zinc-900 hover:bg-zinc-800 rounded-md transition"
+            id="duration"
+            name="duration"
+          >
+            <option value="5m">5 minutes</option>
+            <option value="1h">1 hour (Default)</option>
+            <option value="1d">1 day</option>
+            <option value="1w">1 week</option>
+          </select>
+        </label>
+
+        <div id="metadata" class="inline-flex flex-col gap-2">
+          <p class="text-sm font-medium tracking-wide">Metadata</p>
+          <button
+            id="add-metadata"
+            type="button"
+            class="outline outline-zinc-700 px-2 py-2 text-md font-medium cursor-pointer hover:bg-zinc-800 rounded-md transition"
+          >
+            Add Metadata
+          </button>
+        </div>
+
+        <button
+          class="outline outline-zinc-700 px-2 py-2 text-md font-medium cursor-pointer hover:bg-zinc-800 rounded-md transition"
+          type="submit"
+        >
+          Upload
+        </button>
+      </form>
+
+      <div id="info" class="outline outline-zinc-700 p-4 rounded-lg mt-8">
+        <h2 class="text-lg font-medium mb-2">Information</h2>
+        <p class="text-md text-zinc-300 mb-1">You can upload file with curl:</p>
+        <code
+          id="upload-example"
+          class="text-sm text-zinc-300 bg-zinc-800 py-1 px-1.5 rounded-sm"
+        >
+          curl -F "file=@test.txt" http://temp.sh/upload
+        </code>
+        <p class="text-md text-zinc-300 mb-1 mt-2">With Metadata:</p>
+        <code
+          id="upload-with-metadata-example"
+          class="text-sm text-zinc-300 bg-zinc-800 py-1 px-1.5 rounded-sm"
+        >
+          curl -F "file=@test.txt" -H "X-Meta-Key: Value" http://temp.sh/upload
+        </code>
+        <p class="text-md text-zinc-300 mb-1 mt-2">With Duration:</p>
+        <code
+          id="upload-with-duration-example"
+          class="text-sm text-zinc-300 bg-zinc-800 py-1 px-1.5 rounded-sm"
+        >
+          curl -F "file=@test.txt" http://temp.sh/upload?d=1h
+        </code>
+        <p class="mt-1 text-sm text-zinc-400">
+          Duration can be: 5m, 1h, 1d, 1w. Default is 1h.
+        </p>
+      </div>
+    </main>
+
+    <template id="metadata-template">
+      <div class="grid grid-cols-2 gap-2">
+        <input
+          id="key"
+          name="key"
+          type="text"
+          placeholder="Key"
+          class="outline outline-zinc-700 px-2 py-2 text-md font-medium cursor-pointer hover:bg-zinc-800 rounded-md transition"
+        />
+        <input
+          id="value"
+          name="value"
+          type="text"
+          placeholder="Value"
+          class="outline outline-zinc-700 px-2 py-2 text-md font-medium cursor-pointer hover:bg-zinc-800 rounded-md transition"
+        />
+      </div>
+    </template>
+
+    <template id="success-notification">
+      <div
+        id="notification"
+        class="outline outline-zinc-700 p-4 rounded-lg mt-8"
+      >
+        <h2 class="text-lg font-medium mb-2">✅ Successfully uploaded</h2>
+        <p class="text-md text-zinc-300 mb-1">
+          Your file has been successfully uploaded.
+        </p>
+        <p class="text-md text-zinc-300 mb-1">You can get file at</p>
+        <a
+          id="file-link"
+          href="#"
+          class="text-md text-blue-500 mb-1 hover:underline transition"
+        >
+          link
+        </a>
+        <p class="text-md text-zinc-300">You can get file metadata at</p>
+        <a
+          id="file-metadata-link"
+          href="#"
+          class="text-md text-blue-500 mb-1 hover:underline transition"
+        >
+          link
+        </a>
+      </div>
+    </template>
+
+    <template id="error-notification">
+      <div
+        id="notification"
+        class="outline outline-zinc-700 p-4 rounded-lg mt-8"
+      >
+        <h2 class="text-lg font-medium mb-2">❌ Upload failed</h2>
+        <p class="text-md text-zinc-300">Try again later.</p>
+      </div>
+    </template>
+
+    <script>
+      const form = document.querySelector("form");
+      const metadataContainer = document.querySelector("#metadata");
+      const information = document.querySelector("#information");
+      const metadataTemplate = document.querySelector("#metadata-template");
+      const addMetadataButton = document.querySelector("#add-metadata");
+      const durationSelect = document.querySelector("#duration");
+      const successNotificationTemplate = document.querySelector(
+        "#success-notification",
+      );
+      const errorNotificationTemplate = document.querySelector(
+        "#error-notification",
+      );
+
+      durationSelect.value = "1h";
+
+      replaceUpload();
+
+      addMetadataButton.addEventListener("click", () => {
+        const item = metadataTemplate.content.cloneNode(true);
+
+        const id = metadataContainer.children.length - 1;
+
+        const keyInput = item.querySelector("#key");
+        const valueInput = item.querySelector("#value");
+
+        keyInput.setAttribute("id", `metadata-${id}-key`);
+        keyInput.setAttribute("name", `metadata-${id}-key`);
+        valueInput.setAttribute("id", `metadata-${id}-value`);
+        valueInput.setAttribute("name", `metadata-${id}-value`);
+
+        metadataContainer.insertBefore(item, addMetadataButton);
+      });
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const duration = durationSelect.value;
+
+        if (!duration) {
+          alert("Please select an expiration duration.");
+        }
+
+        const metadata = {};
+
+        const metadataAmount = metadataContainer.children.length - 2;
+
+        for (let i = 1; i <= metadataAmount; i++) {
+          const key = document.querySelector(`#metadata-${i}-key`)?.value;
+          const value = document.querySelector(`#metadata-${i}-value`)?.value;
+
+          if (!key || !value) {
+            continue;
+          }
+
+          metadata[key] = value;
+        }
+
+        const fileInput = form.querySelector('input[type="file"]');
+
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+
+        const headers = {};
+        for (const [key, value] of Object.entries(metadata)) {
+          headers[`X-Meta-${key}`] = value;
+        }
+
+        try {
+          const response = await fetch(
+            `/upload?d=${encodeURIComponent(duration)}`,
+            {
+              method: "POST",
+              body: formData,
+              headers,
+            },
+          );
+
+          const url = await response.text();
+          showSuccessNotification(url);
+        } catch (err) {
+          console.error(err);
+          showErrorNotification(err);
+        }
+      });
+
+      function showSuccessNotification(url) {
+        deleteNotification();
+
+        const item = successNotificationTemplate.content.cloneNode(true);
+
+        const fileLink = item.querySelector("#file-link");
+        const fileMetadataLink = item.querySelector("#file-metadata-link");
+
+        fileLink.removeAttribute("id");
+        fileMetadataLink.removeAttribute("id");
+        fileLink.setAttribute("href", url);
+        fileMetadataLink.setAttribute("href", url + "/metadata");
+        fileLink.textContent = url;
+        fileMetadataLink.textContent = url + "/metadata";
+
+        document.querySelector("main").insertBefore(item, information);
+      }
+
+      function showErrorNotification() {
+        deleteNotification();
+
+        const item = errorNotificationTemplate.content.cloneNode(true);
+
+        document.querySelector("main").insertBefore(item, information);
+      }
+
+      function deleteNotification() {
+        const notification = document.querySelector("#notification");
+        notification?.remove();
+      }
+
+      function replaceUpload() {
+        const uploadLink = `${location.origin}/upload`;
+
+        const uploadExample = document.querySelector("#upload-example");
+        if (uploadLink)
+          uploadExample.textContent = `curl -F "file=@test.txt" ${uploadLink}`;
+
+        const uploadWithMetadataExample = document.querySelector(
+          "#upload-with-metadata-example",
+        );
+        if (uploadWithMetadataExample)
+          uploadWithMetadataExample.textContent = `curl -F "file=@test.txt" -H "X-Meta-Key: Value" ${uploadLink}`;
+
+        const uploadWithDurationExample = document.querySelector(
+          "#upload-with-duration-example",
+        );
+        if (uploadWithDurationExample)
+          uploadWithDurationExample.textContent = `curl -F "file=@test.txt" ${uploadLink}?d=1h`;
+      }
+    </script>
+  </body>
+</html>

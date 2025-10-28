@@ -7,22 +7,29 @@ import (
 )
 
 type HTTPConfig struct {
-	enabled bool
-	port    int
+	enabled   bool
+	allowPage bool
+	port      int
 }
 
 func newHTTPConfig(prefix string, v *viper.Viper) *HTTPConfig {
 	v.SetDefault(path(prefix, "enabled"), true)
+	v.SetDefault(path(prefix, "allowPage"), true)
 	v.SetDefault(path(prefix, "port"), 8080)
 
 	return &HTTPConfig{
-		enabled: v.GetBool(path(prefix, "enabled")),
-		port:    v.GetInt(path(prefix, "port")),
+		enabled:   v.GetBool(path(prefix, "enabled")),
+		allowPage: v.GetBool(path(prefix, "allowPage")),
+		port:      v.GetInt(path(prefix, "port")),
 	}
 }
 
 func (c *HTTPConfig) Enabled() bool {
 	return c.enabled
+}
+
+func (c *HTTPConfig) AllowPage() bool {
+	return c.allowPage
 }
 
 func (c *HTTPConfig) Port() int {

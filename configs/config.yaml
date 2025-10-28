@@ -1,6 +1,7 @@
 origin: http://localhost:8080/file
 http:
   enabled: true
+  allowPage: true
   port: 8080
 grpc:
   enabled: true

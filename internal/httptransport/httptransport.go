@@ -65,7 +65,7 @@ func New(config *config.Config, logger *logging.Logger, fileHostingService *serv
 }
 
 func (ht *HttpTransport) Run() {
-	if !ht.config.GRPC().Enabled() {
+	if !ht.config.HTTP().Enabled() {
 		return
 	}
 
@@ -134,6 +134,7 @@ func (ht *HttpTransport) configureMiddlewares() {
 }
 
 func (ht *HttpTransport) configureRoutes() {
+	ht.indexRoute()
 	ht.fileRoute()
 	ht.fileMetadataRoute()
 	ht.uploadPublicRoute()

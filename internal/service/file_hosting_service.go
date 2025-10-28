@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha1"
 	"fmt"
+	"log"
 	"math/rand/v2"
 	"strconv"
 	"time"
@@ -164,6 +165,8 @@ func (s *FileHostingService) UploadFileWithGenerativeName(ctx context.Context, c
 		}
 		break
 	}
+
+	log.Printf("Duration: %s", s.parseDuration(rawDuration).String())
 
 	now := time.Now()
 	expiredAt := now.Add(s.parseDuration(rawDuration))
