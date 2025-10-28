@@ -16,12 +16,15 @@
         method="post"
         enctype="multipart/form-data"
       >
-        <input
-          class="outline outline-zinc-700 px-2 py-2 text-md font-medium cursor-pointer hover:bg-zinc-800 rounded-md transition"
-          type="file"
-          name="file"
-          required
-        />
+        <div class="inline-flex flex-col gap-1">
+          <input
+            class="outline outline-zinc-700 px-2 py-2 text-md font-medium cursor-pointer hover:bg-zinc-800 rounded-md transition"
+            type="file"
+            name="file"
+            required
+          />
+          <p class="text-sm text-zinc-400">Max size file is 10MB.</p>
+        </div>
 
         <label class="inline-flex flex-col gap-2">
           <span class="text-sm font-medium tracking-wide">Expire duration</span>

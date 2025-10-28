@@ -37,6 +37,7 @@ func New(config *config.Config, logger *logging.Logger, fileHostingService *serv
 				DisableStartupMessage: true,
 				JSONEncoder:           json.Marshal,
 				JSONDecoder:           json.Unmarshal,
+				BodyLimit:             config.HTTP().MaxBodySizeInMB() * 1024 * 1024,
 				ErrorHandler: func(c *fiber.Ctx, err error) error {
 					code := fiber.StatusInternalServerError
 

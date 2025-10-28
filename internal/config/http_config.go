@@ -7,20 +7,23 @@ import (
 )
 
 type HTTPConfig struct {
-	enabled   bool
-	allowPage bool
-	port      int
+	enabled         bool
+	allowPage       bool
+	maxBodySizeInMB int
+	port            int
 }
 
 func newHTTPConfig(prefix string, v *viper.Viper) *HTTPConfig {
 	v.SetDefault(path(prefix, "enabled"), true)
 	v.SetDefault(path(prefix, "allowPage"), true)
+	v.SetDefault(path(prefix, "maxBodySizeInMB"), 10)
 	v.SetDefault(path(prefix, "port"), 8080)
 
 	return &HTTPConfig{
-		enabled:   v.GetBool(path(prefix, "enabled")),
-		allowPage: v.GetBool(path(prefix, "allowPage")),
-		port:      v.GetInt(path(prefix, "port")),
+		enabled:         v.GetBool(path(prefix, "enabled")),
+		allowPage:       v.GetBool(path(prefix, "allowPage")),
+		maxBodySizeInMB: v.GetInt(path(prefix, "maxBodySizeInMB")),
+		port:            v.GetInt(path(prefix, "port")),
 	}
 }
 
@@ -30,6 +33,10 @@ func (c *HTTPConfig) Enabled() bool {
 
 func (c *HTTPConfig) AllowPage() bool {
 	return c.allowPage
+}
+
+func (c *HTTPConfig) MaxBodySizeInMB() int {
+	return c.maxBodySizeInMB
 }
 
 func (c *HTTPConfig) Port() int {

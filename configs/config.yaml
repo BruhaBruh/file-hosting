@@ -6,6 +6,8 @@ http:
   enabled: true
   # Send landing page for upload file without api?
   allowPage: true
+  # Max body size in megabytes
+  maxBodySizeInMB: 10
   # HTTP API port
   port: 8080
 # GRPC Configuration
@@ -47,7 +49,7 @@ fileStorage:
     # Is enabled?
     enabled: true
     # Endpoint of S3 service
-    endpoint: minio:9000
+    endpoint: localhost:9000
     # Region of S3 service
     region: ru-local
     # Bucket name for storing files
@@ -59,6 +61,6 @@ rabbitmq:
   # Is enabled?
   enabled: true
   # RabbitMQ host
-  host: rabbitmq
+  host: localhost
   # RabbitMQ port
   port: 5672
