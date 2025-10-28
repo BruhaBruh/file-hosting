@@ -25,7 +25,7 @@ services:
       retries: 5
 
   filehosting:
-    image: filehosting:latest
+    image: ghcr.io/bruhabruh/file-hosting:main
     ports:
       - "8080:8080" # HTTP
       - "50051:50051" # GRPC

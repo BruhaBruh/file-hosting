@@ -1,5 +1,15 @@
 # File Hosting Service
 
+Features
+
+- File hosting service with REST and gRPC APIs
+- Useful configuration file
+- Generative file name for Public API
+- Supports custom metadata for files
+- Supports file expiration and permanent storage
+- Supports S3 or local storage.
+- Supports authentication for file upload with non-generative name and permanent storage
+
 ## REST
 
 `GET /file/:file`

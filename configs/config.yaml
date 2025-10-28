@@ -1,31 +1,64 @@
+# Origin for send to client after upload file
 origin: http://localhost:8080/file
+# HTTP Configuration
 http:
+  # HTTP API is enabled?
   enabled: true
+  # Send landing page for upload file without api?
   allowPage: true
+  # HTTP API port
   port: 8080
+# GRPC Configuration
 grpc:
+  # GRPC API is enabled?
   enabled: true
+  # GRPC API port
   port: 50051
+# Logger Configuration
 logger:
+  # Logger level
   level: info
+  # Format: json or text
   format: text
+  # Add source information to log messages
   addSource: false
+  # Log file configuration
   file:
+    # Path to log file, if empty, logs will be written to stdout
     path: ""
+    # Maximum size of log file in megabytes
     maxSizeInMB: 10
+    # Maximum number of log files to keep
     maxBackups: 3
+    # Maximum age of log files in days
     maxAgeInDays: 14
+    # Compress log files
     compress: false
+# File Storage Configuration. Must be enabled one of existing storages
 fileStorage:
+  # Basic File Storage Configuration
   basic:
+    # Is enabled?
     enabled: false
+    # Path to store files
     path: files
+  # S3 File Storage Configuration
   s3:
+    # Is enabled?
     enabled: true
+    # Endpoint of S3 service
     endpoint: minio:9000
+    # Region of S3 service
     region: ru-local
+    # Bucket name for storing files
     bucket: files
+    # Use SSL for S3 service
     useSSL: false
+# RabbitMQ Configuration
 rabbitmq:
+  # Is enabled?
+  enabled: true
+  # RabbitMQ host
   host: rabbitmq
+  # RabbitMQ port
   port: 5672
