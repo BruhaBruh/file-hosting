@@ -22,10 +22,10 @@ fileStorage:
     path: files
   s3:
     enabled: true
-    endpoint: localhost:9000
+    endpoint: minio:9000
     region: ru-local
     bucket: files
     useSSL: false
 rabbitmq:
-  host: localhost
+  host: rabbitmq
   port: 5672

@@ -51,6 +51,4 @@ You can find proto file in `proto` directory.
 
 ## TODO
 
-- [ ] Create Dockerfile
-- [ ] Create docker-compose.example.yaml
 - [ ] Add traces, metrics and logging. Also add collectors and exporters

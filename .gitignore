@@ -1,5 +1,6 @@
 files/
 minio/
+rabbitmq_data/
 
 .env*
 !.env.example
