@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package filehosting;
+
+option go_package = "github.com/bruhabruh/file-hosting/pkg/filehosting";
+
+service FileHosting {
+  rpc UploadFile(UploadFileRequest) returns (UploadFileResponse);
+  rpc GetFile(FileId) returns (File);
+  rpc GetFileMetadata(FileId) returns (FileMetadata);
+}
+
+message UploadFileRequest {
+  string filename = 1;
+  bytes content = 2;
+  map<string, MetadataValue> metadata = 3;
+  optional string contentType = 4;
+  optional string duration = 5;
+}
+
+message UploadFileResponse {
+  string url = 1;
+  string id = 2;
+}
+
+message FileId {
+  string id = 1;
+}
+
+message File {
+  string filename = 2;
+  bytes content = 3;
+  string contentType = 4;
+  map<string, MetadataValue> metadata = 5;
+}
+
+message FileMetadata {
+  map<string, MetadataValue> metadata = 1;
+}
+
+message MetadataValue {
+  repeated string values = 1;
+}

@@ -45,6 +45,10 @@ Possible durations:
 - `7d` - 1 week
 - `1w` - 1 week
 
+## gRPC
+
+You can find proto file in `proto` directory.
+
 ## TODO
 
 - [ ] Make landing page for upload file

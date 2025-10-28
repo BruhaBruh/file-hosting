@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/bruhabruh/file-hosting/internal/config"
+	"github.com/bruhabruh/file-hosting/internal/grpctransport"
 	"github.com/bruhabruh/file-hosting/internal/httptransport"
 	"github.com/bruhabruh/file-hosting/internal/service"
 	"github.com/bruhabruh/file-hosting/internal/storage"
@@ -64,10 +65,10 @@ func (a *App) Run() {
 	}
 
 	http := httptransport.New(a.config, logger, fileHostingService)
+	grpc := grpctransport.New(a.config, logger, fileHostingService)
 
-	if err := http.Run(); err != nil {
-		log.Fatalf("Fail run http transport: %s", err.Error())
-	}
+	http.Run()
+	grpc.Run()
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
@@ -75,6 +76,10 @@ func (a *App) Run() {
 	select {
 	case s := <-interrupt:
 		logger.Error(s.String())
+	case err = <-http.Notify():
+		logger.Error("http server error", logging.ErrAttr(err))
+	case err = <-grpc.Notify():
+		logger.Error("grpc server error", logging.ErrAttr(err))
 	case _ = <-ctx.Done():
 		if ctx.Err() != nil {
 			logger.Error(ctx.Err().Error())
@@ -84,4 +89,5 @@ func (a *App) Run() {
 	if err := http.Shutdown(); err != nil {
 		logger.Error(err.Error())
 	}
+	grpc.Shutdown()
 }

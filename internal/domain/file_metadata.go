@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/goccy/go-json"
@@ -22,4 +23,11 @@ func NewFileMetadataFromBytes(data []byte) (*FileMetadata, error) {
 		return nil, err
 	}
 	return &metadata, nil
+}
+
+func (m *FileMetadata) UpdateContentType(content []byte) string {
+	if len(m.MimeType) == 0 {
+		m.MimeType = http.DetectContentType(content)
+	}
+	return m.MimeType
 }

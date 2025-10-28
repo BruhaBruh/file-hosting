@@ -79,8 +79,10 @@ func (s *FileHostingService) GetFileMetadata(ctx context.Context, file string) (
 	return metadata, nil
 }
 
-func (s *FileHostingService) UploadFile(ctx context.Context, data []byte, metadata *domain.FileMetadata, rawDuration string) (string, error) {
+func (s *FileHostingService) UploadFile(ctx context.Context, content []byte, metadata *domain.FileMetadata, rawDuration string) (string, error) {
 	now := time.Now()
+
+	metadata.UpdateContentType(content)
 
 	expiredAt := infiniteTimeStamp
 	if duration := s.parseDuration(rawDuration, true); duration != 0 {
@@ -90,7 +92,7 @@ func (s *FileHostingService) UploadFile(ctx context.Context, data []byte, metada
 	if s.fileStorage.IsExist(ctx, metadata.Name) {
 		oldFileData, err := s.fileStorage.Read(ctx, metadata.Name)
 		if err == nil {
-			newSha1 := s.sha1(data)
+			newSha1 := s.sha1(content)
 			oldSha1 := s.sha1(oldFileData)
 			if newSha1 == oldSha1 {
 				return metadata.Name, nil
@@ -120,7 +122,7 @@ func (s *FileHostingService) UploadFile(ctx context.Context, data []byte, metada
 	newMetadata := &domain.FileMetadata{
 		Name:       metadata.Name,
 		MimeType:   metadata.MimeType,
-		Sha1:       s.sha1(data),
+		Sha1:       s.sha1(content),
 		Meta:       metadata.Meta,
 		CreatedAt:  now,
 		ExpiredAt:  expiredAt,
@@ -139,7 +141,7 @@ func (s *FileHostingService) UploadFile(ctx context.Context, data []byte, metada
 		}
 	}
 
-	err = s.fileStorage.Write(ctx, newMetadata.Name, data, newMetadata.MimeType)
+	err = s.fileStorage.Write(ctx, newMetadata.Name, content, newMetadata.MimeType)
 	if err != nil {
 		return "", err
 	}
@@ -153,7 +155,7 @@ func (s *FileHostingService) UploadFile(ctx context.Context, data []byte, metada
 	return newMetadata.Name, nil
 }
 
-func (s *FileHostingService) UploadFileWithGenerativeName(ctx context.Context, data []byte, metadata *domain.FileMetadata, rawDuration string) (string, error) {
+func (s *FileHostingService) UploadFileWithGenerativeName(ctx context.Context, content []byte, metadata *domain.FileMetadata, rawDuration string) (string, error) {
 	fileName := s.generateFileName()
 	for {
 		if s.fileStorage.IsExist(ctx, fileName) {
@@ -166,10 +168,12 @@ func (s *FileHostingService) UploadFileWithGenerativeName(ctx context.Context, d
 	now := time.Now()
 	expiredAt := now.Add(s.parseDuration(rawDuration))
 
+	metadata.UpdateContentType(content)
+
 	newMetadata := &domain.FileMetadata{
 		Name:       metadata.Name,
 		MimeType:   metadata.MimeType,
-		Sha1:       s.sha1(data),
+		Sha1:       s.sha1(content),
 		Meta:       metadata.Meta,
 		CreatedAt:  now,
 		ExpiredAt:  expiredAt,
@@ -186,7 +190,7 @@ func (s *FileHostingService) UploadFileWithGenerativeName(ctx context.Context, d
 		return "", err
 	}
 
-	err = s.fileStorage.Write(ctx, fileName, data, newMetadata.MimeType)
+	err = s.fileStorage.Write(ctx, fileName, content, newMetadata.MimeType)
 	if err != nil {
 		return "", err
 	}

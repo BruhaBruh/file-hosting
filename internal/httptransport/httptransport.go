@@ -23,6 +23,7 @@ type HttpTransport struct {
 	logger             *logging.Logger
 	fileHostingService *service.FileHostingService
 	fiber              *fiber.App
+	notify             chan error
 }
 
 func New(config *config.Config, logger *logging.Logger, fileHostingService *service.FileHostingService) *HttpTransport {
@@ -54,6 +55,7 @@ func New(config *config.Config, logger *logging.Logger, fileHostingService *serv
 				},
 			},
 		),
+		notify: make(chan error, 1),
 	}
 
 	transport.configureMiddlewares()
@@ -62,16 +64,33 @@ func New(config *config.Config, logger *logging.Logger, fileHostingService *serv
 	return transport
 }
 
-func (ht *HttpTransport) Run() error {
-	addr := fmt.Sprintf("0.0.0.0:%d", ht.config.Port())
+func (ht *HttpTransport) Run() {
+	if !ht.config.GRPC().Enabled() {
+		return
+	}
+
+	addr := fmt.Sprintf("0.0.0.0:%d", ht.config.HTTP().Port())
 	ht.logger.Info(
 		"Start listening http",
 		logging.StringAttr("bound", addr),
 	)
-	return ht.fiber.Listen(addr)
+
+	go func() {
+		if err := ht.fiber.Listen(addr); err != nil {
+			ht.notify <- err
+			return
+		}
+	}()
+}
+
+func (ht *HttpTransport) Notify() <-chan error {
+	return ht.notify
 }
 
 func (ht *HttpTransport) Shutdown() error {
+	if !ht.config.GRPC().Enabled() {
+		return nil
+	}
 	return ht.fiber.Shutdown()
 }
 

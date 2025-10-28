@@ -3,10 +3,17 @@ package apperr
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type AppError struct {
-	inner *fiber.Error
+	inner    *fiber.Error
+	grpcCode codes.Code
+}
+
+func ToGRPCError(err error) error {
+	return From(err).ToGRPCError()
 }
 
 func New(code int, message ...string) *AppError {
@@ -15,6 +22,7 @@ func New(code int, message ...string) *AppError {
 			Code:    code,
 			Message: utils.StatusMessage(code),
 		},
+		grpcCode: httpToGRPCCode(code),
 	}
 	if len(message) > 0 {
 		err.inner.Message = message[0]
@@ -22,9 +30,43 @@ func New(code int, message ...string) *AppError {
 	return err
 }
 
-func From(err *fiber.Error) *AppError {
+func From(err error) *AppError {
+	if err == nil {
+		return nil
+	}
+
+	// Если уже AppError, возвращаем как есть
+	if appErr, ok := err.(*AppError); ok {
+		return appErr
+	}
+
+	// Если fiber.Error, берём его код
+	if fiberErr, ok := err.(*fiber.Error); ok {
+		return &AppError{
+			inner:    fiberErr,
+			grpcCode: httpToGRPCCode(fiberErr.Code),
+		}
+	}
+
+	// Если gRPC status.Error
+	if st, ok := status.FromError(err); ok {
+		httpCode := grpcToHTTPCode(st.Code())
+		return &AppError{
+			inner: &fiber.Error{
+				Code:    httpCode,
+				Message: st.Message(),
+			},
+			grpcCode: st.Code(),
+		}
+	}
+
+	// Для других ошибок — внутренняя ошибка сервера
 	return &AppError{
-		inner: err,
+		inner: &fiber.Error{
+			Code:    fiber.StatusInternalServerError,
+			Message: err.Error(),
+		},
+		grpcCode: codes.Internal,
 	}
 }
 
@@ -37,12 +79,20 @@ func (err *AppError) Code() int {
 	return err.inner.Code
 }
 
+func (err *AppError) GRPCCode() codes.Code {
+	return err.grpcCode
+}
+
 func (err *AppError) Message() string {
 	return err.inner.Message
 }
 
 func (err *AppError) Error() string {
 	return err.inner.Error()
+}
+
+func (err *AppError) ToGRPCError() error {
+	return status.Error(err.grpcCode, err.Message())
 }
 
 // Errors
@@ -89,3 +139,59 @@ var (
 	ErrNotExtended                   = From(fiber.ErrNotExtended)                   // 510
 	ErrNetworkAuthenticationRequired = From(fiber.ErrNetworkAuthenticationRequired) // 511
 )
+
+func httpToGRPCCode(httpCode int) codes.Code {
+	switch httpCode {
+	case fiber.StatusBadRequest:
+		return codes.InvalidArgument
+	case fiber.StatusUnauthorized:
+		return codes.Unauthenticated
+	case fiber.StatusForbidden:
+		return codes.PermissionDenied
+	case fiber.StatusNotFound:
+		return codes.NotFound
+	case fiber.StatusConflict:
+		return codes.AlreadyExists
+	case fiber.StatusTooManyRequests:
+		return codes.ResourceExhausted
+	case fiber.StatusRequestTimeout:
+		return codes.DeadlineExceeded
+	case fiber.StatusNotImplemented:
+		return codes.Unimplemented
+	case fiber.StatusServiceUnavailable:
+		return codes.Unavailable
+	case fiber.StatusInternalServerError, fiber.StatusBadGateway, fiber.StatusGatewayTimeout:
+		return codes.Internal
+	default:
+		return codes.Unknown
+	}
+}
+
+func grpcToHTTPCode(grpcCode codes.Code) int {
+	switch grpcCode {
+	case codes.InvalidArgument, codes.OutOfRange:
+		return fiber.StatusBadRequest
+	case codes.Unauthenticated:
+		return fiber.StatusUnauthorized
+	case codes.PermissionDenied:
+		return fiber.StatusForbidden
+	case codes.NotFound:
+		return fiber.StatusNotFound
+	case codes.AlreadyExists, codes.Aborted:
+		return fiber.StatusConflict
+	case codes.FailedPrecondition:
+		return fiber.StatusPreconditionFailed
+	case codes.ResourceExhausted:
+		return fiber.StatusTooManyRequests
+	case codes.Canceled, codes.DeadlineExceeded:
+		return fiber.StatusRequestTimeout
+	case codes.Unimplemented:
+		return fiber.StatusNotImplemented
+	case codes.Unavailable:
+		return fiber.StatusServiceUnavailable
+	case codes.Internal, codes.Unknown, codes.DataLoss:
+		return fiber.StatusInternalServerError
+	default:
+		return fiber.StatusInternalServerError
+	}
+}

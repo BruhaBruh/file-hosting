@@ -9,8 +9,9 @@ import (
 
 type Config struct {
 	origin      string
-	port        int
 	apiKey      string
+	http        *HTTPConfig
+	grpc        *GRPCConfig
 	logger      *LoggerConfig
 	fileStorage *FileStorageConfig
 	rabbitmq    *RabbitMQConfig
@@ -22,8 +23,9 @@ func newConfig(v *viper.Viper) *Config {
 
 	return &Config{
 		origin:      v.GetString("origin"),
-		port:        v.GetInt("port"),
 		apiKey:      v.GetString("API_KEY"),
+		http:        newHTTPConfig("http", v),
+		grpc:        newGRPCConfig("grpc", v),
 		logger:      newLoggerConfig("logger", v),
 		fileStorage: newFileStorageConfig("fileStorage", v),
 		rabbitmq:    newRabbitMQConfig("rabbitmq", v),
@@ -34,12 +36,16 @@ func (c *Config) Origin() string {
 	return c.origin
 }
 
-func (c *Config) Port() int {
-	return c.port
-}
-
 func (c *Config) ApiKey() string {
 	return c.apiKey
+}
+
+func (c *Config) HTTP() *HTTPConfig {
+	return c.http
+}
+
+func (c *Config) GRPC() *GRPCConfig {
+	return c.grpc
 }
 
 func (c *Config) Logger() *LoggerConfig {
@@ -55,12 +61,16 @@ func (c *Config) RabbitMQ() *RabbitMQConfig {
 }
 
 func (c *Config) Validate() error {
-	if c.port < 0 || c.port > 65535 {
-		return fmt.Errorf("invalid port: %d", c.port)
-	}
-
 	if c.apiKey == "" {
 		return errors.New("API_KEY is required")
+	}
+
+	if err := c.http.Validate(); err != nil {
+		return fmt.Errorf("invalid http config: %w", err)
+	}
+
+	if err := c.grpc.Validate(); err != nil {
+		return fmt.Errorf("invalid grpc config: %w", err)
 	}
 
 	if err := c.logger.Validate(); err != nil {

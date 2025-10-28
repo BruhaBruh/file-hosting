@@ -13,3 +13,8 @@ run: ## Run application
 	go mod tidy && go mod download && \
 	go run ./cmd/app
 .PHONY: run
+
+proto: ## Generate protobuf files
+	mkdir -p ./pkg/filehosting && \
+  protoc -I proto proto/file-hosting.proto --go_out=./pkg/filehosting --go-grpc_out=./pkg/filehosting --go_opt=paths=source_relative --go-grpc_opt=paths=source_relative
+.PHONY: proto

@@ -3,7 +3,6 @@ package httptransport
 import (
 	"fmt"
 	"io"
-	"net/http"
 	"strings"
 
 	"github.com/bruhabruh/file-hosting/internal/app/apperr"
@@ -27,7 +26,7 @@ func (ht *HttpTransport) uploadPublicRoute() {
 		}
 		defer file.Close()
 
-		data, err := io.ReadAll(file)
+		content, err := io.ReadAll(file)
 		if err != nil {
 			logging.L(c.UserContext()).Warn("failed to read file", logging.ErrAttr(err))
 			return apperr.ErrBadRequest.WithMessage("Fail to read file")
@@ -47,15 +46,7 @@ func (ht *HttpTransport) uploadPublicRoute() {
 			}
 		}
 
-		if len(metadata.MimeType) == 0 {
-			metadata.MimeType = http.DetectContentType(data)
-		}
-
-		if len(metadata.MimeType) == 0 {
-			metadata.MimeType = http.DetectContentType(data)
-		}
-
-		fileName, err := ht.fileHostingService.UploadFileWithGenerativeName(c.UserContext(), data, metadata, c.Query("d"))
+		fileName, err := ht.fileHostingService.UploadFileWithGenerativeName(c.UserContext(), content, metadata, c.Query("d"))
 		if err != nil {
 			return err
 		}
@@ -81,7 +72,7 @@ func (ht *HttpTransport) uploadPrivateRoute() {
 		}
 		defer file.Close()
 
-		data, err := io.ReadAll(file)
+		content, err := io.ReadAll(file)
 		if err != nil {
 			logging.L(c.UserContext()).Warn("failed to read file", logging.ErrAttr(err))
 			return apperr.ErrBadRequest.WithMessage("Fail to read file")
@@ -101,15 +92,7 @@ func (ht *HttpTransport) uploadPrivateRoute() {
 			}
 		}
 
-		if len(metadata.MimeType) == 0 {
-			metadata.MimeType = http.DetectContentType(data)
-		}
-
-		if len(metadata.MimeType) == 0 {
-			metadata.MimeType = http.DetectContentType(data)
-		}
-
-		fileName, err := ht.fileHostingService.UploadFile(c.UserContext(), data, metadata, c.Query("d"))
+		fileName, err := ht.fileHostingService.UploadFile(c.UserContext(), content, metadata, c.Query("d"))
 		if err != nil {
 			return err
 		}

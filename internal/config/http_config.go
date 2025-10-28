@@ -1,0 +1,38 @@
+package config
+
+import (
+	"fmt"
+
+	"github.com/spf13/viper"
+)
+
+type HTTPConfig struct {
+	enabled bool
+	port    int
+}
+
+func newHTTPConfig(prefix string, v *viper.Viper) *HTTPConfig {
+	v.SetDefault(path(prefix, "enabled"), true)
+	v.SetDefault(path(prefix, "port"), 8080)
+
+	return &HTTPConfig{
+		enabled: v.GetBool(path(prefix, "enabled")),
+		port:    v.GetInt(path(prefix, "port")),
+	}
+}
+
+func (c *HTTPConfig) Enabled() bool {
+	return c.enabled
+}
+
+func (c *HTTPConfig) Port() int {
+	return c.port
+}
+
+func (c *HTTPConfig) Validate() error {
+	if c.enabled && (c.port < 0 || c.port > 65535) {
+		return fmt.Errorf("invalid port: %d", c.port)
+	}
+
+	return nil
+}
