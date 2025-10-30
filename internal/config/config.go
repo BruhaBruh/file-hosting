@@ -61,7 +61,7 @@ func (c *Config) RabbitMQ() *RabbitMQConfig {
 }
 
 func (c *Config) Validate() error {
-	if c.apiKey == "" {
+	if len(c.apiKey) == 0 {
 		return errors.New("API_KEY is required")
 	}
 

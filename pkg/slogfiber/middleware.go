@@ -22,24 +22,8 @@ type customAttributesCtxKeyType struct{}
 var customAttributesCtxKey = customAttributesCtxKeyType{}
 
 var (
-	TraceIDKey   = "trace_id"
-	SpanIDKey    = "span_id"
-	RequestIDKey = "id"
-
 	RequestBodyMaxSize  = 64 * 1024 // 64KB
 	ResponseBodyMaxSize = 64 * 1024 // 64KB
-
-	HiddenRequestHeaders = map[string]struct{}{
-		"authorization": {},
-		"cookie":        {},
-		"set-cookie":    {},
-		"x-auth-token":  {},
-		"x-csrf-token":  {},
-		"x-xsrf-token":  {},
-	}
-	HiddenResponseHeaders = map[string]struct{}{
-		"set-cookie": {},
-	}
 
 	// Formatted with http.CanonicalHeaderKey
 	RequestIDHeaderKey = "X-Request-Id"
@@ -121,8 +105,6 @@ func NewWithConfig(logger *slog.Logger, config Config) fiber.Handler {
 		})
 
 		start := time.Now()
-		path := c.Path()
-		query := string(c.Request().URI().QueryString())
 
 		requestID := c.Get(RequestIDHeaderKey)
 		if config.WithRequestID {
@@ -133,80 +115,41 @@ func NewWithConfig(logger *slog.Logger, config Config) fiber.Handler {
 			c.Set("X-Request-ID", requestID)
 		}
 
-		baseAttributes := []slog.Attr{}
-
-		method := c.Context().Method()
-		host := c.Hostname()
-		params := c.AllParams()
-		route := c.Route().Path
-		userAgent := c.Context().UserAgent()
-		referer := c.Get(fiber.HeaderReferer)
-
 		ip := c.Context().RemoteIP().String()
 		if len(c.IPs()) > 0 {
 			ip = c.IPs()[0]
 		}
 
-		requestAttributes := []slog.Attr{
-			slog.Time("time", start.UTC()),
-			slog.String("method", string(method)),
-			slog.String("host", host),
-			slog.String("path", path),
-			slog.String("query", query),
-			slog.Any("params", params),
-			slog.String("route", route),
-			slog.String("ip", ip),
-			slog.Any("x-forwarded-for", c.IPs()),
-			slog.String("referer", referer),
+		attrs := attributes{
+			start:         start.UTC(),
+			method:        string(c.Context().Method()),
+			host:          c.Hostname(),
+			path:          c.Path(),
+			query:         string(c.Request().URI().QueryString()),
+			params:        c.AllParams(),
+			route:         c.Route().Path,
+			referer:       c.Get(fiber.HeaderReferer),
+			ip:            ip,
+			xForwardedFor: c.IPs(),
+			requestID:     requestID,
+			attrs:         []slog.Attr{},
+
+			span:   trace.SpanFromContext(c.UserContext()),
+			config: &config,
 		}
 
-		if config.WithRequestID {
-			baseAttributes = append(baseAttributes, slog.String(RequestIDKey, requestID))
+		requestBody := c.Body()
+		if len(requestBody) > RequestBodyMaxSize {
+			requestBody = requestBody[:RequestBodyMaxSize]
+		}
+		attrs.request = &requestAttributes{
+			length:    len(c.Body()),
+			body:      string(requestBody),
+			headers:   c.GetReqHeaders(),
+			userAgent: string(c.Context().UserAgent()),
 		}
 
-		// otel
-		baseAttributes = append(baseAttributes, extractTraceSpanID(c.UserContext(), config.WithTraceID, config.WithSpanID)...)
-
-		// request body
-		requestAttributes = append(requestAttributes, slog.Int("length", len((c.Body()))))
-		if config.WithRequestBody {
-			body := c.Body()
-			if len(body) > RequestBodyMaxSize {
-				body = body[:RequestBodyMaxSize]
-			}
-			requestAttributes = append(requestAttributes, slog.String("body", string(body)))
-		}
-
-		// request headers
-		if config.WithRequestHeader {
-			kv := []any{}
-
-			for k, v := range c.GetReqHeaders() {
-				if _, found := HiddenRequestHeaders[strings.ToLower(k)]; found {
-					continue
-				}
-				kv = append(kv, slog.Any(k, v))
-			}
-
-			requestAttributes = append(requestAttributes, slog.Group("header", kv...))
-		}
-
-		if config.WithUserAgent {
-			requestAttributes = append(requestAttributes, slog.String("user-agent", string(userAgent)))
-		}
-
-		requestLoggerAttributes := append(
-			[]slog.Attr{
-				{
-					Key:   "request",
-					Value: slog.GroupValue(requestAttributes...),
-				},
-			},
-			baseAttributes...,
-		)
-
-		requestLogger := logging.WithDefaultAttrs(logger, requestLoggerAttributes...)
-		c.SetUserContext(logging.ContextWithLogger(c.UserContext(), requestLogger))
+		c.SetUserContext(logging.ContextWithLogger(c.UserContext(), logging.WithDefaultAttrs(logger, slog.String("protocol", "http"), attrs.Group())))
 
 		err := c.Next()
 		if err != nil {
@@ -222,59 +165,26 @@ func NewWithConfig(logger *slog.Logger, config Config) fiber.Handler {
 			}
 		}
 
+		responseBody := c.Body()
+		if len(responseBody) > ResponseBodyMaxSize {
+			responseBody = responseBody[:ResponseBodyMaxSize]
+		}
+
 		status := c.Response().StatusCode()
-		end := time.Now()
-		latency := end.Sub(start)
 
-		responseAttributes := []slog.Attr{
-			slog.Time("time", end.UTC()),
-			slog.Duration("latency", latency),
-			slog.Int("status", status),
+		attrs.response = &responseAttributes{
+			status:  status,
+			end:     time.Now(),
+			length:  len(c.Response().Body()),
+			body:    string(responseBody),
+			headers: c.GetRespHeaders(),
 		}
-
-		// response body
-		responseAttributes = append(responseAttributes, slog.Int("length", len(c.Response().Body())))
-		if config.WithResponseBody {
-			body := c.Response().Body()
-			if len(body) > ResponseBodyMaxSize {
-				body = body[:ResponseBodyMaxSize]
-			}
-			responseAttributes = append(responseAttributes, slog.String("body", string(body)))
-		}
-
-		// response headers
-		if config.WithResponseHeader {
-			kv := []any{}
-
-			for k, v := range c.GetRespHeaders() {
-				if _, found := HiddenResponseHeaders[strings.ToLower(k)]; found {
-					continue
-				}
-				kv = append(kv, slog.Any(k, v))
-			}
-
-			responseAttributes = append(responseAttributes, slog.Group("header", kv...))
-		}
-
-		attributes := append(
-			[]slog.Attr{
-				{
-					Key:   "request",
-					Value: slog.GroupValue(requestAttributes...),
-				},
-				{
-					Key:   "response",
-					Value: slog.GroupValue(responseAttributes...),
-				},
-			},
-			baseAttributes...,
-		)
 
 		// custom context values
 		if v := c.Context().UserValue(customAttributesCtxKey); v != nil {
-			switch attrs := v.(type) {
+			switch attributes := v.(type) {
 			case []slog.Attr:
-				attributes = append(attributes, attrs...)
+				attrs.attrs = append(attrs.attrs, attributes...)
 			}
 		}
 
@@ -299,7 +209,7 @@ func NewWithConfig(logger *slog.Logger, config Config) fiber.Handler {
 			}
 		}
 
-		logger.LogAttrs(c.UserContext(), level, msg, attributes...)
+		logger.LogAttrs(c.UserContext(), level, msg, slog.String("protocol", "http"), attrs.Group())
 
 		return err
 	}
@@ -334,6 +244,14 @@ func AddCustomAttributes(c *fiber.Ctx, attr slog.Attr) {
 	}
 }
 
+func traceID(ctx context.Context) string {
+	return trace.SpanFromContext(ctx).SpanContext().TraceID().String()
+}
+
+func spanID(ctx context.Context) string {
+	return trace.SpanFromContext(ctx).SpanContext().SpanID().String()
+}
+
 func extractTraceSpanID(ctx context.Context, withTraceID bool, withSpanID bool) []slog.Attr {
 	if !withTraceID && !withSpanID {
 		return []slog.Attr{}
@@ -348,8 +266,7 @@ func extractTraceSpanID(ctx context.Context, withTraceID bool, withSpanID bool) 
 	spanCtx := span.SpanContext()
 
 	if withTraceID && spanCtx.HasTraceID() {
-		traceID := trace.SpanFromContext(ctx).SpanContext().TraceID().String()
-		attrs = append(attrs, slog.String(TraceIDKey, traceID))
+		attrs = append(attrs, slog.String(TraceIDKey, traceID(ctx)))
 	}
 
 	if withSpanID && spanCtx.HasSpanID() {

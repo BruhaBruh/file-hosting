@@ -21,15 +21,15 @@ logger:
   # Logger level
   level: info
   # Format: json or text
-  format: text
+  format: json
   # Add source information to log messages
-  addSource: false
+  addSource: true
   # Log file configuration
   file:
     # Path to log file, if empty, logs will be written to stdout
     path: ""
     # Maximum size of log file in megabytes
-    maxSizeInMB: 10
+    maxSizeInMB: 128
     # Maximum number of log files to keep
     maxBackups: 3
     # Maximum age of log files in days

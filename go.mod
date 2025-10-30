@@ -6,6 +6,7 @@ require (
 	github.com/goccy/go-json v0.10.5
 	github.com/gofiber/fiber/v2 v2.52.9
 	github.com/google/uuid v1.6.0
+	github.com/joho/godotenv v1.5.1
 	github.com/minio/minio-go/v7 v7.0.95
 	github.com/spf13/viper v1.21.0
 	github.com/streadway/amqp v1.1.0

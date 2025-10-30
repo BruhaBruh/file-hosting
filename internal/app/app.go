@@ -68,7 +68,13 @@ func (a *App) Run() {
 	grpc := grpctransport.New(a.config, logger, fileHostingService)
 
 	http.Run()
+	defer func() {
+		if err := http.Shutdown(); err != nil {
+			logger.Error(err.Error())
+		}
+	}()
 	grpc.Run()
+	defer grpc.Shutdown()
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
@@ -85,9 +91,4 @@ func (a *App) Run() {
 			logger.Error(ctx.Err().Error())
 		}
 	}
-
-	if err := http.Shutdown(); err != nil {
-		logger.Error(err.Error())
-	}
-	grpc.Shutdown()
 }

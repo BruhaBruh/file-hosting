@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func AuthorizationInterceptor(apiKey string) grpc.UnaryServerInterceptor {
+func UnaryServerAuthorizationInterceptor(apiKey string) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
 		req any,

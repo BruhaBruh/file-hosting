@@ -135,6 +135,7 @@ func (ht *HttpTransport) configureMiddlewares() {
 }
 
 func (ht *HttpTransport) configureRoutes() {
+	ht.healthRoute()
 	ht.indexRoute()
 	ht.fileRoute()
 	ht.fileMetadataRoute()

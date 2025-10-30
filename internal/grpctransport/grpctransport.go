@@ -1,7 +1,6 @@
 package grpctransport
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 	"net"
@@ -11,6 +10,7 @@ import (
 	"github.com/bruhabruh/file-hosting/pkg/filehosting"
 	"github.com/bruhabruh/file-hosting/pkg/grpcinterceptors"
 	"github.com/bruhabruh/file-hosting/pkg/logging"
+	"github.com/bruhabruh/file-hosting/pkg/sloggrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -30,10 +30,20 @@ func New(config *config.Config, logger *logging.Logger, fileHostingService *serv
 		fileHostingService: fileHostingService,
 		grpc: grpc.NewServer(
 			grpc.ChainUnaryInterceptor(
-				grpcinterceptors.LoggerInterceptor(logger, func(ctx context.Context, l *slog.Logger) context.Context {
-					return logging.ContextWithLogger(ctx, l)
-				}),
-				grpcinterceptors.AuthorizationInterceptor(config.ApiKey()),
+				sloggrpc.NewWithConfig(
+					logger,
+					sloggrpc.Config{
+						DefaultLevel:     slog.LevelInfo,
+						ClientErrorLevel: slog.LevelWarn,
+						ServerErrorLevel: slog.LevelError,
+						WithRequestID:    true,
+						WithSpanID:       true,
+						WithTraceID:      true,
+						WithMetadata:     false,
+						WithRequestBody:  false,
+						Filters:          []sloggrpc.Filter{},
+					}),
+				grpcinterceptors.UnaryServerAuthorizationInterceptor(config.ApiKey()),
 			),
 		),
 		notify: make(chan error, 1),

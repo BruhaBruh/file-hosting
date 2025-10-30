@@ -4,10 +4,13 @@ import (
 	"log"
 	"strings"
 
+	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
 
 func Load() (*Config, error) {
+	_ = godotenv.Load()
+
 	v := viper.New()
 
 	v.SetConfigName("config")
