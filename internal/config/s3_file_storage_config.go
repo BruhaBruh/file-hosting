@@ -11,6 +11,7 @@ type S3FileStorageConfig struct {
 	endpoint  string
 	region    string
 	bucket    string
+	directory string
 	accessKey string
 	secretKey string
 	useSSL    bool
@@ -19,12 +20,14 @@ type S3FileStorageConfig struct {
 func newS3FileStorageConfig(prefix string, v *viper.Viper) *S3FileStorageConfig {
 	v.SetDefault(path(prefix, "enabled"), false)
 	v.SetDefault(path(prefix, "useSSL"), true)
+	v.SetDefault(path(prefix, "directory"), "")
 
 	return &S3FileStorageConfig{
 		enabled:   v.GetBool(path(prefix, "enabled")),
 		endpoint:  v.GetString(path(prefix, "endpoint")),
 		region:    v.GetString(path(prefix, "region")),
 		bucket:    v.GetString(path(prefix, "bucket")),
+		directory: v.GetString(path(prefix, "directory")),
 		accessKey: v.GetString("S3_ACCESS_KEY"),
 		secretKey: v.GetString("S3_SECRET_KEY"),
 		useSSL:    v.GetBool(path(prefix, "useSSL")),
@@ -45,6 +48,10 @@ func (c *S3FileStorageConfig) Region() string {
 
 func (c *S3FileStorageConfig) Bucket() string {
 	return c.bucket
+}
+
+func (c *S3FileStorageConfig) Directory() string {
+	return c.directory
 }
 
 func (c *S3FileStorageConfig) AccessKey() string {

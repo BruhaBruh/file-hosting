@@ -46,7 +46,7 @@ func (ht *HttpTransport) uploadPublicRoute() {
 			}
 		}
 
-		fileName, err := ht.fileHostingService.UploadFileWithGenerativeName(c.UserContext(), content, metadata, c.Query("d"))
+		fileName, _, err := ht.fileHostingService.UploadFileWithGenerativeName(c.UserContext(), content, metadata, c.Query("d"))
 		if err != nil {
 			return err
 		}
@@ -92,7 +92,7 @@ func (ht *HttpTransport) uploadPrivateRoute() {
 			}
 		}
 
-		fileName, err := ht.fileHostingService.UploadFile(c.UserContext(), content, metadata, c.Query("d"))
+		fileName, _, err := ht.fileHostingService.UploadFile(c.UserContext(), content, metadata, c.Query("d"))
 		if err != nil {
 			return err
 		}

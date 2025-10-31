@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/bruhabruh/file-hosting/internal/app/apperr"
 	"github.com/bruhabruh/file-hosting/pkg/logging"
@@ -23,6 +24,24 @@ var _ FileStorage = (*S3FileStorage)(nil)
 
 func (s *S3FileStorage) IsExist(ctx context.Context, file string) bool {
 	return s.s3.Exists(ctx, file)
+}
+
+func (s *S3FileStorage) Files(ctx context.Context) ([]string, error) {
+	objects, err := s.s3.Objects(ctx)
+	if err != nil {
+		return nil, apperr.ErrInternalServerError.WithMessage("Fail get objects in s3")
+	}
+
+	files := []string{}
+
+	for _, entry := range objects {
+		if strings.HasSuffix(entry, ".metadata") {
+			continue
+		}
+		files = append(files, entry)
+	}
+
+	return files, nil
 }
 
 func (s *S3FileStorage) Read(ctx context.Context, file string) ([]byte, error) {

@@ -18,12 +18,12 @@ import (
 type GRPCTransport struct {
 	config             *config.Config
 	logger             *logging.Logger
-	fileHostingService *service.FileHostingService
+	fileHostingService service.FileHostingService
 	grpc               *grpc.Server
 	notify             chan error
 }
 
-func New(config *config.Config, logger *logging.Logger, fileHostingService *service.FileHostingService) *GRPCTransport {
+func New(config *config.Config, logger *logging.Logger, fileHostingService service.FileHostingService) *GRPCTransport {
 	transport := &GRPCTransport{
 		config:             config,
 		logger:             logger,

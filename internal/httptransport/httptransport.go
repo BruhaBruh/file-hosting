@@ -21,12 +21,12 @@ import (
 type HttpTransport struct {
 	config             *config.Config
 	logger             *logging.Logger
-	fileHostingService *service.FileHostingService
+	fileHostingService service.FileHostingService
 	fiber              *fiber.App
 	notify             chan error
 }
 
-func New(config *config.Config, logger *logging.Logger, fileHostingService *service.FileHostingService) *HttpTransport {
+func New(config *config.Config, logger *logging.Logger, fileHostingService service.FileHostingService) *HttpTransport {
 	transport := &HttpTransport{
 		config:             config,
 		logger:             logger,
@@ -137,6 +137,7 @@ func (ht *HttpTransport) configureMiddlewares() {
 func (ht *HttpTransport) configureRoutes() {
 	ht.healthRoute()
 	ht.indexRoute()
+	ht.filesRoute()
 	ht.fileRoute()
 	ht.fileMetadataRoute()
 	ht.uploadPublicRoute()

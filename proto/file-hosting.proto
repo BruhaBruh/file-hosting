@@ -2,12 +2,15 @@ syntax = "proto3";
 
 package filehosting;
 
+import "google/protobuf/empty.proto";
+
 option go_package = "github.com/bruhabruh/file-hosting/pkg/filehosting";
 
 service FileHosting {
   rpc UploadFile(UploadFileRequest) returns (UploadFileResponse);
   rpc GetFile(FileId) returns (File);
   rpc GetFileMetadata(FileId) returns (FileMetadata);
+  rpc GetFiles(google.protobuf.Empty) returns (Files);
 }
 
 message UploadFileRequest {
@@ -28,16 +31,27 @@ message FileId {
 }
 
 message File {
-  string filename = 2;
-  bytes content = 3;
-  string contentType = 4;
-  map<string, MetadataValue> metadata = 5;
+  string filename = 1;
+  bytes content = 2;
+  string contentType = 3;
+  map<string, MetadataValue> metadata = 4;
 }
 
 message FileMetadata {
-  map<string, MetadataValue> metadata = 1;
+  string id = 1;
+  string name = 2;
+  string mimeType = 3;
+  string sha1 = 4;
+  string createdAt = 5;
+  string expiredAt = 6;
+  optional string backupName = 7;
+  map<string, MetadataValue> meta = 8;
 }
 
 message MetadataValue {
   repeated string values = 1;
+}
+
+message Files {
+  repeated FileMetadata metadata = 1;
 }

@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -22,6 +23,7 @@ const (
 	FileHosting_UploadFile_FullMethodName      = "/filehosting.FileHosting/UploadFile"
 	FileHosting_GetFile_FullMethodName         = "/filehosting.FileHosting/GetFile"
 	FileHosting_GetFileMetadata_FullMethodName = "/filehosting.FileHosting/GetFileMetadata"
+	FileHosting_GetFiles_FullMethodName        = "/filehosting.FileHosting/GetFiles"
 )
 
 // FileHostingClient is the client API for FileHosting service.
@@ -31,6 +33,7 @@ type FileHostingClient interface {
 	UploadFile(ctx context.Context, in *UploadFileRequest, opts ...grpc.CallOption) (*UploadFileResponse, error)
 	GetFile(ctx context.Context, in *FileId, opts ...grpc.CallOption) (*File, error)
 	GetFileMetadata(ctx context.Context, in *FileId, opts ...grpc.CallOption) (*FileMetadata, error)
+	GetFiles(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Files, error)
 }
 
 type fileHostingClient struct {
@@ -71,6 +74,16 @@ func (c *fileHostingClient) GetFileMetadata(ctx context.Context, in *FileId, opt
 	return out, nil
 }
 
+func (c *fileHostingClient) GetFiles(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Files, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Files)
+	err := c.cc.Invoke(ctx, FileHosting_GetFiles_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FileHostingServer is the server API for FileHosting service.
 // All implementations must embed UnimplementedFileHostingServer
 // for forward compatibility.
@@ -78,6 +91,7 @@ type FileHostingServer interface {
 	UploadFile(context.Context, *UploadFileRequest) (*UploadFileResponse, error)
 	GetFile(context.Context, *FileId) (*File, error)
 	GetFileMetadata(context.Context, *FileId) (*FileMetadata, error)
+	GetFiles(context.Context, *emptypb.Empty) (*Files, error)
 	mustEmbedUnimplementedFileHostingServer()
 }
 
@@ -96,6 +110,9 @@ func (UnimplementedFileHostingServer) GetFile(context.Context, *FileId) (*File, 
 }
 func (UnimplementedFileHostingServer) GetFileMetadata(context.Context, *FileId) (*FileMetadata, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFileMetadata not implemented")
+}
+func (UnimplementedFileHostingServer) GetFiles(context.Context, *emptypb.Empty) (*Files, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFiles not implemented")
 }
 func (UnimplementedFileHostingServer) mustEmbedUnimplementedFileHostingServer() {}
 func (UnimplementedFileHostingServer) testEmbeddedByValue()                     {}
@@ -172,6 +189,24 @@ func _FileHosting_GetFileMetadata_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FileHosting_GetFiles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileHostingServer).GetFiles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileHosting_GetFiles_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileHostingServer).GetFiles(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FileHosting_ServiceDesc is the grpc.ServiceDesc for FileHosting service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -190,6 +225,10 @@ var FileHosting_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetFileMetadata",
 			Handler:    _FileHosting_GetFileMetadata_Handler,
+		},
+		{
+			MethodName: "GetFiles",
+			Handler:    _FileHosting_GetFiles_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

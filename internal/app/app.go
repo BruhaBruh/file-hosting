@@ -15,6 +15,7 @@ import (
 	"github.com/bruhabruh/file-hosting/pkg/logging"
 	"github.com/bruhabruh/file-hosting/pkg/rabbitmq"
 	"github.com/bruhabruh/file-hosting/pkg/s3"
+	"github.com/redis/go-redis/v9"
 )
 
 type App struct {
@@ -46,10 +47,17 @@ func (a *App) Run() {
 		a.config.FileStorage().S3().SecretKey(),
 		a.config.FileStorage().S3().UseSSL(),
 		a.config.FileStorage().S3().Bucket(),
+		a.config.FileStorage().S3().Directory(),
 	)
 	if err != nil {
 		log.Fatalf("Fail create s3 client: %s", err.Error())
 	}
+
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     a.config.Redis().URL(),
+		Password: a.config.Redis().Password(),
+		DB:       a.config.Redis().Database(),
+	})
 
 	var fileStorage storage.FileStorage
 	if a.config.FileStorage().Basic().Enabled() {
@@ -59,7 +67,7 @@ func (a *App) Run() {
 		fileStorage = storage.NewS3FileStorage(s3)
 	}
 
-	fileHostingService, err := service.NewFileHostingService(ctx, fileStorage, mq)
+	fileHostingService, err := service.NewFileHostingCachedService(ctx, fileStorage, mq, rdb)
 	if err != nil {
 		log.Fatalf("Fail create file hosting service: %s", err.Error())
 	}

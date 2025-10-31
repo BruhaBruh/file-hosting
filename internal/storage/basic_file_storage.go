@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/bruhabruh/file-hosting/internal/app/apperr"
 	"github.com/bruhabruh/file-hosting/pkg/logging"
@@ -36,6 +37,27 @@ func (s *BasicFileStorage) IsExist(ctx context.Context, file string) bool {
 		}
 	}
 	return true
+}
+
+func (s *BasicFileStorage) Files(ctx context.Context) ([]string, error) {
+	entries, err := os.ReadDir(s.directory)
+	if err != nil {
+		return nil, apperr.ErrInternalServerError.WithMessage("Fail read directory")
+	}
+
+	files := []string{}
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		if strings.HasSuffix(entry.Name(), ".metadata") {
+			continue
+		}
+		files = append(files, entry.Name())
+	}
+
+	return files, nil
 }
 
 func (s *BasicFileStorage) Read(ctx context.Context, file string) ([]byte, error) {

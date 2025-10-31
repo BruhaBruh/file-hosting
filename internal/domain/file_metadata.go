@@ -8,6 +8,7 @@ import (
 )
 
 type FileMetadata struct {
+	Id         string              `json:"id"`
 	Name       string              `json:"name"`
 	MimeType   string              `json:"mime_type"`
 	Sha1       string              `json:"sha1"`

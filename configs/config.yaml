@@ -54,6 +54,8 @@ fileStorage:
     region: ru-local
     # Bucket name for storing files
     bucket: files
+    # Directory for storing files
+    directory: file-hosting
     # Use SSL for S3 service
     useSSL: false
 # RabbitMQ Configuration
@@ -64,3 +66,11 @@ rabbitmq:
   host: localhost
   # RabbitMQ port
   port: 5672
+# Redis Configuration
+redis:
+  # Redis host
+  host: localhost
+  # Redis port
+  port: 6379
+  # Redis database
+  database: 0

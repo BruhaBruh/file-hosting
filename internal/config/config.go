@@ -15,6 +15,7 @@ type Config struct {
 	logger      *LoggerConfig
 	fileStorage *FileStorageConfig
 	rabbitmq    *RabbitMQConfig
+	redis       *RedisConfig
 }
 
 func newConfig(v *viper.Viper) *Config {
@@ -29,6 +30,7 @@ func newConfig(v *viper.Viper) *Config {
 		logger:      newLoggerConfig("logger", v),
 		fileStorage: newFileStorageConfig("fileStorage", v),
 		rabbitmq:    newRabbitMQConfig("rabbitmq", v),
+		redis:       newRedisConfig("redis", v),
 	}
 }
 
@@ -60,6 +62,10 @@ func (c *Config) RabbitMQ() *RabbitMQConfig {
 	return c.rabbitmq
 }
 
+func (c *Config) Redis() *RedisConfig {
+	return c.redis
+}
+
 func (c *Config) Validate() error {
 	if len(c.apiKey) == 0 {
 		return errors.New("API_KEY is required")
@@ -83,6 +89,10 @@ func (c *Config) Validate() error {
 
 	if err := c.rabbitmq.Validate(); err != nil {
 		return fmt.Errorf("invalid rabbitmq config: %w", err)
+	}
+
+	if err := c.redis.Validate(); err != nil {
+		return fmt.Errorf("invalid redis config: %w", err)
 	}
 
 	return nil
