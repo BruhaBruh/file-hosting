@@ -11,8 +11,11 @@ import (
 	"github.com/bruhabruh/file-hosting/pkg/grpcinterceptors"
 	"github.com/bruhabruh/file-hosting/pkg/logging"
 	"github.com/bruhabruh/file-hosting/pkg/sloggrpc"
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+
+	grpcprometheus "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 )
 
 type GRPCTransport struct {
@@ -23,12 +26,23 @@ type GRPCTransport struct {
 	notify             chan error
 }
 
-func New(config *config.Config, logger *logging.Logger, fileHostingService service.FileHostingService) *GRPCTransport {
+func New(config *config.Config, logger *logging.Logger, registry *prometheus.Registry, fileHostingService service.FileHostingService) *GRPCTransport {
+	s := grpcprometheus.NewServerMetrics(
+		grpcprometheus.WithServerHandlingTimeHistogram(),
+		grpcprometheus.WithServerCounterOptions(
+			grpcprometheus.WithNamespace("service"),
+			grpcprometheus.WithSubsystem("grpc"),
+		),
+	)
+	registry.Register(s)
+
 	transport := &GRPCTransport{
 		config:             config,
 		logger:             logger,
 		fileHostingService: fileHostingService,
 		grpc: grpc.NewServer(
+			grpc.UnaryInterceptor(s.UnaryServerInterceptor()),
+			grpc.StreamInterceptor(s.StreamServerInterceptor()),
 			grpc.ChainUnaryInterceptor(
 				sloggrpc.NewWithConfig(
 					logger,
@@ -52,6 +66,8 @@ func New(config *config.Config, logger *logging.Logger, fileHostingService servi
 	filehosting.RegisterFileHostingServer(transport.grpc, newFileHostingServer(config, logger, fileHostingService))
 
 	reflection.Register(transport.grpc)
+
+	s.InitializeMetrics(transport.grpc)
 
 	return transport
 }

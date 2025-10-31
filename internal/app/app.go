@@ -15,6 +15,8 @@ import (
 	"github.com/bruhabruh/file-hosting/pkg/logging"
 	"github.com/bruhabruh/file-hosting/pkg/rabbitmq"
 	"github.com/bruhabruh/file-hosting/pkg/s3"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -72,8 +74,14 @@ func (a *App) Run() {
 		log.Fatalf("Fail create file hosting service: %s", err.Error())
 	}
 
-	http := httptransport.New(a.config, logger, fileHostingService)
-	grpc := grpctransport.New(a.config, logger, fileHostingService)
+	reg := prometheus.NewRegistry()
+	reg.MustRegister(
+		collectors.NewGoCollector(collectors.WithGoCollectorRuntimeMetrics()),
+		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
+	)
+
+	http := httptransport.New(a.config, logger, reg, fileHostingService)
+	grpc := grpctransport.New(a.config, logger, reg, fileHostingService)
 
 	http.Run()
 	defer func() {

@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/bruhabruh/file-hosting/internal/app/apperr"
 	"github.com/bruhabruh/file-hosting/internal/config"
 	"github.com/bruhabruh/file-hosting/internal/service"
@@ -13,22 +14,24 @@ import (
 	"github.com/bruhabruh/file-hosting/pkg/slogfiber"
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/healthcheck"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type HttpTransport struct {
 	config             *config.Config
 	logger             *logging.Logger
+	registry           *prometheus.Registry
 	fileHostingService service.FileHostingService
 	fiber              *fiber.App
 	notify             chan error
 }
 
-func New(config *config.Config, logger *logging.Logger, fileHostingService service.FileHostingService) *HttpTransport {
+func New(config *config.Config, logger *logging.Logger, registry *prometheus.Registry, fileHostingService service.FileHostingService) *HttpTransport {
 	transport := &HttpTransport{
 		config:             config,
+		registry:           registry,
 		logger:             logger,
 		fileHostingService: fileHostingService,
 		fiber: fiber.New(
@@ -115,13 +118,10 @@ func (ht *HttpTransport) configureMiddlewares() {
 			Filters: []slogfiber.Filter{
 				slogfiber.IgnorePath(
 					"/.well-known/appspecific/com.chrome.devtools.json",
-					"/livez",
-					"/healthz",
 				),
 			},
 		},
 	))
-	ht.fiber.Use(healthcheck.New())
 	ht.fiber.Use(limiter.New(limiter.Config{
 		Max:               20,
 		Expiration:        30 * time.Second,
@@ -131,6 +131,13 @@ func (ht *HttpTransport) configureMiddlewares() {
 		logging.ContextWithLogger(c.UserContext(), ht.logger)
 		return c.Next()
 	})
+
+	fiberProm := fiberprometheus.NewWithRegistry(ht.registry, "file-hosting", "service", "http", make(map[string]string))
+	fiberProm.RegisterAt(ht.fiber, "/metrics")
+	fiberProm.SetSkipPaths([]string{"/health", "/metrics"})
+	fiberProm.SetIgnoreStatusCodes([]int{401, 403, 404})
+	ht.fiber.Use(fiberProm.Middleware)
+
 	ht.fiber.Use(recover.New())
 }
 
