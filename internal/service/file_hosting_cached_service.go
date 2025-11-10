@@ -180,6 +180,40 @@ func (s *FileHostingCachedService) UploadFileWithGenerativeName(ctx context.Cont
 	return filename, file, nil
 }
 
+func (s *FileHostingCachedService) RenameFile(ctx context.Context, oldName string, newName string) error {
+	err := s.service.RenameFile(ctx, oldName, newName)
+	if err != nil {
+		return err
+	}
+	if err := s.rdb.Del(ctx, s.key("file", oldName)).Err(); err != nil {
+		logging.L(ctx).Error("fail delete file", logging.StringAttr("file", oldName), logging.ErrAttr(err))
+	}
+	if err := s.rdb.Del(ctx, s.key("file", oldName, "metadata")).Err(); err != nil {
+		logging.L(ctx).Error("fail delete file metadata", logging.StringAttr("file", oldName), logging.ErrAttr(err))
+	}
+	if err := s.rdb.Del(ctx, s.key("files")).Err(); err != nil {
+		logging.L(ctx).Error("fail delete files cache", logging.ErrAttr(err))
+	}
+	return nil
+}
+
+func (s *FileHostingCachedService) DeleteFile(ctx context.Context, file string) error {
+	err := s.service.DeleteFile(ctx, file)
+	if err != nil {
+		return err
+	}
+	if err := s.rdb.Del(ctx, s.key("file", file)).Err(); err != nil {
+		logging.L(ctx).Error("fail delete file", logging.StringAttr("file", file), logging.ErrAttr(err))
+	}
+	if err := s.rdb.Del(ctx, s.key("file", file, "metadata")).Err(); err != nil {
+		logging.L(ctx).Error("fail delete file metadata", logging.StringAttr("file", file), logging.ErrAttr(err))
+	}
+	if err := s.rdb.Del(ctx, s.key("files")).Err(); err != nil {
+		logging.L(ctx).Error("fail delete files cache", logging.ErrAttr(err))
+	}
+	return nil
+}
+
 func (s *FileHostingCachedService) key(key ...string) string {
 	result := redisKeyPrefix
 	for _, k := range key {

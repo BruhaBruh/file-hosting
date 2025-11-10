@@ -140,3 +140,19 @@ func (s *fileHostingServer) GetFiles(ctx context.Context, req *emptypb.Empty) (*
 		Metadata: metadata,
 	}, nil
 }
+
+func (s *fileHostingServer) RenameFile(ctx context.Context, req *filehosting.RenameFileRequest) (*emptypb.Empty, error) {
+	if err := s.fileHostingService.RenameFile(ctx, req.GetId(), req.GetNewName()); err != nil {
+		return nil, apperr.ToGRPCError(err)
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
+func (s *fileHostingServer) DeleteFile(ctx context.Context, req *filehosting.FileId) (*emptypb.Empty, error) {
+	if err := s.fileHostingService.DeleteFile(ctx, req.GetId()); err != nil {
+		return nil, apperr.ToGRPCError(err)
+	}
+
+	return &emptypb.Empty{}, nil
+}

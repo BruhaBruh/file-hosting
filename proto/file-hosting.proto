@@ -11,6 +11,8 @@ service FileHosting {
   rpc GetFile(FileId) returns (File);
   rpc GetFileMetadata(FileId) returns (FileMetadata);
   rpc GetFiles(google.protobuf.Empty) returns (Files);
+  rpc RenameFile(RenameFileRequest) returns (google.protobuf.Empty);
+  rpc DeleteFile(FileId) returns (google.protobuf.Empty);
 }
 
 message UploadFileRequest {
@@ -54,4 +56,9 @@ message MetadataValue {
 
 message Files {
   repeated FileMetadata metadata = 1;
+}
+
+message RenameFileRequest {
+  string id = 1;
+  string newName = 2;
 }

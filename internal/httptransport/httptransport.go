@@ -149,6 +149,8 @@ func (ht *HttpTransport) configureRoutes() {
 	ht.fileMetadataRoute()
 	ht.uploadPublicRoute()
 	ht.uploadPrivateRoute()
+	ht.renameFileRoute()
+	ht.deleteFileRoute()
 }
 
 func (ht *HttpTransport) authorizationMiddleware() fiber.Handler {

@@ -450,6 +450,58 @@ func (x *Files) GetMetadata() []*FileMetadata {
 	return nil
 }
 
+type RenameFileRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	NewName       string                 `protobuf:"bytes,2,opt,name=newName,proto3" json:"newName,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RenameFileRequest) Reset() {
+	*x = RenameFileRequest{}
+	mi := &file_file_hosting_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RenameFileRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RenameFileRequest) ProtoMessage() {}
+
+func (x *RenameFileRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_file_hosting_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RenameFileRequest.ProtoReflect.Descriptor instead.
+func (*RenameFileRequest) Descriptor() ([]byte, []int) {
+	return file_file_hosting_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *RenameFileRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *RenameFileRequest) GetNewName() string {
+	if x != nil {
+		return x.NewName
+	}
+	return ""
+}
+
 var File_file_hosting_proto protoreflect.FileDescriptor
 
 const file_file_hosting_proto_rawDesc = "" +
@@ -497,13 +549,20 @@ const file_file_hosting_proto_rawDesc = "" +
 	"\rMetadataValue\x12\x16\n" +
 	"\x06values\x18\x01 \x03(\tR\x06values\">\n" +
 	"\x05Files\x125\n" +
-	"\bmetadata\x18\x01 \x03(\v2\x19.filehosting.FileMetadataR\bmetadata2\x8a\x02\n" +
+	"\bmetadata\x18\x01 \x03(\v2\x19.filehosting.FileMetadataR\bmetadata\"=\n" +
+	"\x11RenameFileRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
+	"\anewName\x18\x02 \x01(\tR\anewName2\x8b\x03\n" +
 	"\vFileHosting\x12M\n" +
 	"\n" +
 	"UploadFile\x12\x1e.filehosting.UploadFileRequest\x1a\x1f.filehosting.UploadFileResponse\x121\n" +
 	"\aGetFile\x12\x13.filehosting.FileId\x1a\x11.filehosting.File\x12A\n" +
 	"\x0fGetFileMetadata\x12\x13.filehosting.FileId\x1a\x19.filehosting.FileMetadata\x126\n" +
-	"\bGetFiles\x12\x16.google.protobuf.Empty\x1a\x12.filehosting.FilesB3Z1github.com/bruhabruh/file-hosting/pkg/filehostingb\x06proto3"
+	"\bGetFiles\x12\x16.google.protobuf.Empty\x1a\x12.filehosting.Files\x12D\n" +
+	"\n" +
+	"RenameFile\x12\x1e.filehosting.RenameFileRequest\x1a\x16.google.protobuf.Empty\x129\n" +
+	"\n" +
+	"DeleteFile\x12\x13.filehosting.FileId\x1a\x16.google.protobuf.EmptyB3Z1github.com/bruhabruh/file-hosting/pkg/filehostingb\x06proto3"
 
 var (
 	file_file_hosting_proto_rawDescOnce sync.Once
@@ -517,7 +576,7 @@ func file_file_hosting_proto_rawDescGZIP() []byte {
 	return file_file_hosting_proto_rawDescData
 }
 
-var file_file_hosting_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_file_hosting_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_file_hosting_proto_goTypes = []any{
 	(*UploadFileRequest)(nil),  // 0: filehosting.UploadFileRequest
 	(*UploadFileResponse)(nil), // 1: filehosting.UploadFileResponse
@@ -526,15 +585,16 @@ var file_file_hosting_proto_goTypes = []any{
 	(*FileMetadata)(nil),       // 4: filehosting.FileMetadata
 	(*MetadataValue)(nil),      // 5: filehosting.MetadataValue
 	(*Files)(nil),              // 6: filehosting.Files
-	nil,                        // 7: filehosting.UploadFileRequest.MetadataEntry
-	nil,                        // 8: filehosting.File.MetadataEntry
-	nil,                        // 9: filehosting.FileMetadata.MetaEntry
-	(*emptypb.Empty)(nil),      // 10: google.protobuf.Empty
+	(*RenameFileRequest)(nil),  // 7: filehosting.RenameFileRequest
+	nil,                        // 8: filehosting.UploadFileRequest.MetadataEntry
+	nil,                        // 9: filehosting.File.MetadataEntry
+	nil,                        // 10: filehosting.FileMetadata.MetaEntry
+	(*emptypb.Empty)(nil),      // 11: google.protobuf.Empty
 }
 var file_file_hosting_proto_depIdxs = []int32{
-	7,  // 0: filehosting.UploadFileRequest.metadata:type_name -> filehosting.UploadFileRequest.MetadataEntry
-	8,  // 1: filehosting.File.metadata:type_name -> filehosting.File.MetadataEntry
-	9,  // 2: filehosting.FileMetadata.meta:type_name -> filehosting.FileMetadata.MetaEntry
+	8,  // 0: filehosting.UploadFileRequest.metadata:type_name -> filehosting.UploadFileRequest.MetadataEntry
+	9,  // 1: filehosting.File.metadata:type_name -> filehosting.File.MetadataEntry
+	10, // 2: filehosting.FileMetadata.meta:type_name -> filehosting.FileMetadata.MetaEntry
 	4,  // 3: filehosting.Files.metadata:type_name -> filehosting.FileMetadata
 	5,  // 4: filehosting.UploadFileRequest.MetadataEntry.value:type_name -> filehosting.MetadataValue
 	5,  // 5: filehosting.File.MetadataEntry.value:type_name -> filehosting.MetadataValue
@@ -542,13 +602,17 @@ var file_file_hosting_proto_depIdxs = []int32{
 	0,  // 7: filehosting.FileHosting.UploadFile:input_type -> filehosting.UploadFileRequest
 	2,  // 8: filehosting.FileHosting.GetFile:input_type -> filehosting.FileId
 	2,  // 9: filehosting.FileHosting.GetFileMetadata:input_type -> filehosting.FileId
-	10, // 10: filehosting.FileHosting.GetFiles:input_type -> google.protobuf.Empty
-	1,  // 11: filehosting.FileHosting.UploadFile:output_type -> filehosting.UploadFileResponse
-	3,  // 12: filehosting.FileHosting.GetFile:output_type -> filehosting.File
-	4,  // 13: filehosting.FileHosting.GetFileMetadata:output_type -> filehosting.FileMetadata
-	6,  // 14: filehosting.FileHosting.GetFiles:output_type -> filehosting.Files
-	11, // [11:15] is the sub-list for method output_type
-	7,  // [7:11] is the sub-list for method input_type
+	11, // 10: filehosting.FileHosting.GetFiles:input_type -> google.protobuf.Empty
+	7,  // 11: filehosting.FileHosting.RenameFile:input_type -> filehosting.RenameFileRequest
+	2,  // 12: filehosting.FileHosting.DeleteFile:input_type -> filehosting.FileId
+	1,  // 13: filehosting.FileHosting.UploadFile:output_type -> filehosting.UploadFileResponse
+	3,  // 14: filehosting.FileHosting.GetFile:output_type -> filehosting.File
+	4,  // 15: filehosting.FileHosting.GetFileMetadata:output_type -> filehosting.FileMetadata
+	6,  // 16: filehosting.FileHosting.GetFiles:output_type -> filehosting.Files
+	11, // 17: filehosting.FileHosting.RenameFile:output_type -> google.protobuf.Empty
+	11, // 18: filehosting.FileHosting.DeleteFile:output_type -> google.protobuf.Empty
+	13, // [13:19] is the sub-list for method output_type
+	7,  // [7:13] is the sub-list for method input_type
 	7,  // [7:7] is the sub-list for extension type_name
 	7,  // [7:7] is the sub-list for extension extendee
 	0,  // [0:7] is the sub-list for field type_name
@@ -567,7 +631,7 @@ func file_file_hosting_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_file_hosting_proto_rawDesc), len(file_file_hosting_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

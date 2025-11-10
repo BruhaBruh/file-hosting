@@ -12,4 +12,6 @@ type FileHostingService interface {
 	GetFileMetadata(ctx context.Context, file string) (*domain.FileMetadata, error)
 	UploadFile(ctx context.Context, content []byte, metadata *domain.FileMetadata, rawDuration string) (string, *domain.File, error)
 	UploadFileWithGenerativeName(ctx context.Context, content []byte, metadata *domain.FileMetadata, rawDuration string) (string, *domain.File, error)
+	RenameFile(ctx context.Context, oldName string, newName string) error
+	DeleteFile(ctx context.Context, file string) error
 }

@@ -257,6 +257,66 @@ func (s *FileHostingServiceImpl) UploadFileWithGenerativeName(ctx context.Contex
 	}, nil
 }
 
+func (s *FileHostingServiceImpl) RenameFile(ctx context.Context, oldName string, newName string) error {
+	_, err := s.fileStorage.Read(ctx, oldName)
+	if err != nil {
+		return apperr.ErrInternalServerError.WithMessage("Fail read old file. Maybe it was deleted")
+	}
+	newMetadataFileName := s.metadataFile(newName)
+
+	oldMetadata, _ := s.GetFileMetadata(ctx, oldName)
+	if oldMetadata != nil && oldMetadata.ExpiredAt != infiniteTimeStamp {
+		err = s.scheduleDeleteFile(newName, oldMetadata.Sha1, oldMetadata.ExpiredAt)
+		if err != nil {
+			return err
+		}
+	}
+
+	newMetadata := &domain.FileMetadata{
+		Id:         newName,
+		Name:       oldMetadata.Name,
+		MimeType:   oldMetadata.MimeType,
+		Sha1:       oldMetadata.Sha1,
+		Meta:       oldMetadata.Meta,
+		CreatedAt:  oldMetadata.CreatedAt,
+		ExpiredAt:  oldMetadata.ExpiredAt,
+		BackupName: oldMetadata.BackupName,
+	}
+
+	if err := s.fileStorage.Move(ctx, oldName, newName); err != nil {
+		return err
+	}
+	if s.fileStorage.IsExist(ctx, s.metadataFile(oldName)) {
+		err = s.fileStorage.Delete(ctx, s.metadataFile(oldName))
+		if err != nil {
+			return err
+		}
+
+		metadataInBytes, err := json.Marshal(newMetadata)
+		if err != nil {
+			return apperr.ErrInternalServerError.WithMessage("Fail serialize old metadata")
+		}
+		err = s.fileStorage.Write(ctx, newMetadataFileName, metadataInBytes, "application/json")
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *FileHostingServiceImpl) DeleteFile(ctx context.Context, fileName string) error {
+	if err := s.fileStorage.Delete(ctx, fileName); err != nil {
+		return apperr.ErrInternalServerError.WithMessage("Fail delete file")
+	}
+
+	if err := s.fileStorage.Delete(ctx, s.metadataFile(fileName)); err != nil {
+		return apperr.ErrInternalServerError.WithMessage("Fail delete file metadata")
+	}
+
+	return nil
+}
+
 func (s *FileHostingServiceImpl) scheduleDeleteFile(fileName string, sha1 string, expiredAt time.Time) error {
 	msg := deleteFileMessage{
 		FileName:  fileName,
