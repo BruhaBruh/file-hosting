@@ -67,6 +67,7 @@ func (s *fileHostingServer) GetFileMetadata(ctx context.Context, req *filehostin
 	}
 
 	return &filehosting.FileMetadata{
+		Id:         metadata.Id,
 		Name:       metadata.Name,
 		MimeType:   metadata.MimeType,
 		Sha1:       metadata.Sha1,
