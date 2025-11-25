@@ -41,6 +41,7 @@ func New(config *config.Config, logger *logging.Logger, registry *prometheus.Reg
 		logger:             logger,
 		fileHostingService: fileHostingService,
 		grpc: grpc.NewServer(
+			grpc.MaxRecvMsgSize(11*1024*1024),
 			grpc.UnaryInterceptor(s.UnaryServerInterceptor()),
 			grpc.StreamInterceptor(s.StreamServerInterceptor()),
 			grpc.ChainUnaryInterceptor(
