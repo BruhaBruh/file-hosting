@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"time"
 
 	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/bruhabruh/file-hosting/internal/app/apperr"
@@ -14,7 +13,6 @@ import (
 	"github.com/bruhabruh/file-hosting/pkg/slogfiber"
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -122,11 +120,6 @@ func (ht *HttpTransport) configureMiddlewares() {
 			},
 		},
 	))
-	ht.fiber.Use(limiter.New(limiter.Config{
-		Max:               20,
-		Expiration:        30 * time.Second,
-		LimiterMiddleware: limiter.SlidingWindow{},
-	}))
 	ht.fiber.Use(func(c *fiber.Ctx) error {
 		logging.ContextWithLogger(c.UserContext(), ht.logger)
 		return c.Next()
