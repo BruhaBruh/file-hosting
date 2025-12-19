@@ -96,7 +96,6 @@ func (ht *HttpTransport) uploadPrivateRoute() {
 		if err != nil {
 			return err
 		}
-
 		link := fmt.Sprintf("%s/%s", ht.config.Origin(), fileName)
 
 		return c.SendString(link)

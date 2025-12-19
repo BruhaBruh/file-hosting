@@ -106,7 +106,6 @@ func (s *FileHostingServiceImpl) UploadFile(ctx context.Context, content []byte,
 	now := time.Now()
 
 	metadata.UpdateContentType(content)
-
 	expiredAt := infiniteTimeStamp
 	if duration := parseDuration(rawDuration, true); duration != 0 {
 		expiredAt = now.Add(duration)
@@ -118,7 +117,11 @@ func (s *FileHostingServiceImpl) UploadFile(ctx context.Context, content []byte,
 			newSha1 := s.sha1(content)
 			oldSha1 := s.sha1(oldFileData)
 			if newSha1 == oldSha1 {
-				return metadata.Name, nil, nil
+				metadata, _ := s.GetFileMetadata(ctx, metadata.Name)
+				return metadata.Name, &domain.File{
+					Content:  content,
+					Metadata: metadata,
+				}, nil
 			}
 		}
 		newFileName := fmt.Sprintf("%s.%d", metadata.Name, now.UnixNano())

@@ -209,7 +209,9 @@ func NewWithConfig(logger *slog.Logger, config Config) fiber.Handler {
 			}
 		}
 
-		logger.LogAttrs(c.UserContext(), level, msg, slog.String("protocol", "http"), attrs.Group())
+		if status != 404 {
+			logger.LogAttrs(c.UserContext(), level, msg, slog.String("protocol", "http"), attrs.Group())
+		}
 
 		return err
 	}
